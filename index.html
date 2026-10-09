@@ -253,6 +253,8 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
 .bw-f{width:46px;flex:none;text-align:center;border:1px solid var(--line)}.bw-f.on{border-color:var(--accent)}
 .bw-r{display:flex;justify-content:flex-end;gap:3px;font-size:13px;min-height:17px;padding:0 3px;border-bottom:1px solid var(--line)}.bw-f b{display:block;font-size:18px;min-height:24px;font-variant-numeric:tabular-nums}
 .pk-pow.hz{position:relative}.pk-pow.hz i{position:absolute;left:64%;width:12%;top:-3px;bottom:-3px;border:2px solid var(--green)}
+.mpcode{font-family:var(--display);font-size:clamp(40px,7vw,64px);font-weight:800;letter-spacing:.14em;color:var(--yellow);line-height:1}
+#scr-mp select{background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:7px 10px;font:inherit}
 @media (max-width:700px){.jradar{width:100px;height:100px}.fx-ammo{font-size:32px}}
 @media (max-width:700px){
   #tower{width:150px;font-size:13px}#minimap{width:120px;height:120px}#spd,#gear{font-size:40px}.bars{width:110px}#wxhud{min-width:0}#keys{display:none}
@@ -303,6 +305,7 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
       <div class="credits num">Credits <b id="mCredits">0</b></div>
       <nav class="menu-list">
         <button data-go="career">Career <small id="mCareerSub">Six-round championship</small></button>
+        <button data-go="mp">Multiplayer <small>Race friends online with a room code</small></button>
         <button data-go="tracks">Quick Race <small>Any circuit, full weekend</small></button>
         <button data-go="games">More Games <small>11 games: build fights, shooters, sport and more</small></button>
         <button data-go="garage">Garage <small>Upgrades and livery</small></button>
@@ -396,6 +399,10 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
       </div>
     </section>
 
+    <section class="scr solid" id="scr-mp" hidden>
+      <div class="topbar"><button class="back" id="mpBack">Back</button><div><div class="eyebrow">Online</div><h2>Multiplayer</h2></div></div>
+      <div id="mpBody"></div>
+    </section>
     <section class="scr solid" id="scr-games" hidden>
       <div class="topbar"><button class="back" data-go="menu">Back</button><div><div class="eyebrow">Beyond the track</div><h2>More games</h2></div></div>
       <div id="gamesGrid"></div>
@@ -768,11 +775,11 @@ let SES=null,WK=null,curTrackId=null,TRK=null;
 function getTrack(id){if(curTrackId!==id||!TRK){TRK=buildTrackData(TRACKS.find(t=>t.id===id));curTrackId=id;buildTrackMesh(TRK)}return TRK}
 
 function newStats(){return{t:0,thrT:0,brkT:0,coastT:0,offT:0,top:0,dist:0,collisions:0,trackLimits:0,overtakes:0,lost:0,pits:0,posByLap:[],laps:[],startPos:0,ersUsed:0}}
-function makePlayer(T,s0,lat0,tire){const p=ptAt(T,s0,lat0);
-  const c={isPlayer:true,id:'p',name:S.settings.name||'Driver 24',code:'P24',num:24,color:S.livery.primary,x:p.x,z:p.z,h:p.h,u:0,v:0,r:0,ax:0,steer:0,delta:0,ers:1,tire,wear:0,
+function makePlayer(T,s0,lat0,tire,num=24){const p=ptAt(T,s0,lat0);
+  const c={isPlayer:true,id:'p',name:S.settings.name||'Driver 24',code:'P24',num,color:S.livery.primary,x:p.x,z:p.z,h:p.h,u:0,v:0,r:0,ax:0,steer:0,delta:0,ers:1,tire,wear:0,
     lap:0,s:wrapS(T,s0),prevS:wrapS(T,s0),idx:p.i,lat:lat0,timing:false,lapStart:0,lapValid:true,sec:[0,0],cur:{},rec:[],recT:0,trace:[],traceNext:0,best:null,last:null,
     pitReq:false,pitSide:false,pitLimiter:false,penalty:0,offFlag:false,strikes:0,cp:[],finished:false,finishTime:null,pits:0,frozen:0,tel:{thr:0,brk:0,af:0,ar:0,spin:0,lock:0}};
-  c.mesh=makeCar({primary:S.livery.primary,secondary:S.livery.secondary,helmet:S.livery.helmet,pattern:S.livery.pattern,num:24,tire});scene.add(c.mesh);return c}
+  c.mesh=makeCar({primary:S.livery.primary,secondary:S.livery.secondary,helmet:S.livery.helmet,pattern:S.livery.pattern,num,tire});scene.add(c.mesh);return c}
 function makeAI(T,d,s0,lat0,pace,tire){const team=TEAMS[d[2]];const p=ptAt(T,s0,lat0);
   const a={isPlayer:false,id:'a'+d[1],name:d[0],code:d[0].split(' ')[1].slice(0,3).toUpperCase(),num:d[1],color:team.c,team,pace,s:wrapS(T,s0),prevS:wrapS(T,s0),lat:lat0,bias:rnd(-0.6,0.6),
     speed:0,lap:0,lapStart:0,best:null,last:null,tire,wear:0,pit:0,pits:0,cp:[],finished:false,finishTime:null,passT:0,passLat:0,react:rnd(0.12,0.4),x:p.x,z:p.z,h:p.h};
@@ -786,12 +793,12 @@ function diffBase(){return{easy:-0.03,normal:0.008,hard:0.024}[S.settings.diffic
 /* type: practice | quali | race | watch */
 function startSession(type,opts={}){
   clearCars();const id=WK.id,T=getTrack(id),def=T.def;
-  const dur=type==='race'?S.settings.laps*120+200:type==='quali'?600:1200;
+  const LAPS=(WK&&WK.laps)||S.settings.laps;const dur=type==='race'?LAPS*120+200:type==='quali'?600:1200;
   const W=WK.wx[type==='watch'?'practice':type]||makeWeather(def,'dry',dur);
   const Wc={sched:W.sched,inten:W.sched[0].i,wet:W.sched[0].i>0?Math.min(1,W.sched[0].i*0.9+0.1):0};
   const baseP=carParams(BASE_UP),prof=speedProfile(T,baseP,1);
   SES={type,T,def,W:Wc,time:0,raceTime:0,state:'run',paused:false,cars:[],ai:[],prm:carParams(),aiPrm:baseP,prof,finishOrder:[],fastest:null,stats:newStats(),
-    totalLaps:S.settings.laps,wearMult:type==='race'?30/S.settings.laps:3,qualiLaps:3,msgT:0,coolT:0,lightsT:0,goT:0,hudT:0,ghost:null,tower:[],order:[],ended:false,jump:false};
+    totalLaps:LAPS,wearMult:type==='race'?30/LAPS:3,mp:WK.mode==='mp',remotes:[],qualiLaps:3,msgT:0,coolT:0,lightsT:0,goT:0,hudT:0,ghost:null,tower:[],order:[],ended:false,jump:false};
   const ref=refTime(id,prof.t);
   if(type==='watch'){
     const g=opts.replay;SES.watch=g;SES.ghost={data:g.frames,t:0,mesh:makeCar({ghost:true}),on:true,loop:true};scene.add(SES.ghost.mesh);
@@ -806,17 +813,18 @@ function startSession(type,opts={}){
   if(type==='race'){
     const grid=WK.grid;// array of ids in order, 'p' for player
     grid.forEach((gid,pos)=>{const s0=-12-pos*8,lat=(pos%2?1:-1)*T.hw*0.42;
-      if(gid==='p'){const pl=makePlayer(T,s0,lat,WK.tire);pl.lap=0;SES.player=pl;SES.cars.push(pl)}
+      if(SES.mp){if(gid===NET.myId){const pl=makePlayer(T,s0,lat,WK.tire,mpNum());pl.lap=0;SES.player=pl;SES.cars.push(pl)}else{const pp=NET.race&&NET.race.players.find(x=>x.id===gid);if(pp){const r=makeRemote(T,pp,s0,lat);SES.remotes.push(r);SES.cars.push(r)}}}
+      else if(gid==='p'){const pl=makePlayer(T,s0,lat,WK.tire);pl.lap=0;SES.player=pl;SES.cars.push(pl)}
       else{const d=AI_DRIVERS.find(x=>'a'+x[1]===gid);const m=diffBase()+d[3]+(WK.form[d[1]]||0);const pace=clamp(prof.t/(ref*(1-m)),0.6,1.08);
         const w=Wc.wet,tire=w>0.55?'wet':w>0.22?'inter':(Math.random()<0.5?'medium':'soft');const a=makeAI(T,d,s0,lat,pace,tire);SES.ai.push(a);SES.cars.push(a)}});
-    SES.state='lights';SES.lightsT=0;SES.goT=5+rnd(0.4,2.2);SES.stats.startPos=grid.indexOf('p')+1;
+    SES.state='lights';SES.lightsT=0;SES.goT=WK.goT||5+rnd(0.4,2.2);SES.stats.startPos=grid.indexOf(SES.mp?NET.myId:'p')+1;
   }
   const gd=ghostFor(id);
   if(gd&&(type!=='race'||S.settings.ghostRace)){SES.ghost={data:gd.frames,t:0,mesh:makeCar({ghost:true}),on:false,time:gd.time,label:gd.label||'Personal best'};scene.add(SES.ghost.mesh);SES.ghost.mesh.visible=false}
   applyWeatherVisual(0);showHUD(true);buildTowerBase();
   if(type==='practice')setMsg('Practice','Set your benchmark lap',3);
   if(type==='quali')setMsg('Qualifying','3 timed laps · track limits delete laps',3.5);
-  if(type==='race')setMsg(def.gp,S.settings.laps+' laps',3);
+  if(type==='race')setMsg(def.gp,LAPS+' laps'+(WK.mode==='mp'?' · online':''),3);
   camState.init=false;
 }
 
@@ -955,7 +963,7 @@ function crossLine(c,tc){
   c.timing=true;c.sec=[0,0];c.cur={};c.lapValid=true;c.rec=[];c.recT=0;c.trace=[];c.traceNext=0;c.lapTop=0;c.pitLap=false;
   if(SES.ghost&&!SES.ghost.loop){SES.ghost.t=(SES.time-tc);SES.ghost.on=true}
   if(type==='race'){
-    if(c.lap>SES.totalLaps&&!c.finished){c.finished=true;c.finishTime=SES.raceTime;SES.finishOrder.push('p');setMsg('Chequered flag','P'+(SES.finishOrder.length)+' · '+fmtT(c.finishTime),4);SES.coolT=4;sfxBeep(660)}
+    if(c.lap>SES.totalLaps&&!c.finished){c.finished=true;c.finishTime=SES.raceTime;SES.finishOrder.push('p');setMsg('Chequered flag','P'+(SES.finishOrder.length)+' · '+fmtT(c.finishTime),4);SES.coolT=SES.mp?1e9:4;sfxBeep(660)}
     else if(c.lap===SES.totalLaps)setMsg('Final lap','',1.8);
     if(c.pitReq&&!c.finished)doPlayerPit(c);
   }
@@ -1062,6 +1070,7 @@ function simulate(dt){
     else setMsg('Lap invalid','Track limits',1.4)}
   if(!off&&Math.abs(c.lat)<T.hw+1.4)c.offFlag=false;
   for(const a of SES.ai)stepAI(a,dt);
+  if(SES.mp){updateRemotes(dt);if(c.finished){SES.mpWait=(SES.mpWait||0)+dt;const all=SES.remotes.every(r=>r.finished||r.left);if((all&&SES.mpWait>3)||SES.mpWait>60)finishSession('complete');else if(!all&&SES.msgT<=0)setMsg('Waiting for others',Math.ceil(60-SES.mpWait)+'s max',1)}}
   stepGhost(dt);
   poseCar(c.mesh,c.x,c.z,c.h,c.delta,c.u*dt/0.34);
   if(type==='race')raceOrder();
@@ -1100,7 +1109,7 @@ function buildMinimap(){const cv=$('#minimap'),T=SES.T,w=cv.clientWidth||190,h=c
 function drawMinimap(){const cv=$('#minimap'),x=cv.getContext('2d'),m=mmScale;x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,cv.width,cv.height);x.drawImage(mmBase,0,0);x.scale(m.dpr,m.dpr);
   const dot=(px,pz,r,col,ring)=>{x.beginPath();x.arc(px*m.s+m.ox,pz*m.s+m.oz,r,0,7);if(ring){x.strokeStyle=col;x.lineWidth=2;x.stroke()}else{x.fillStyle=col;x.fill()}};
   if(SES.ghost&&SES.ghost.mesh.visible&&SES.ghost.pose)dot(SES.ghost.pose.x,SES.ghost.pose.z,4.5,'#b14bff',true);
-  for(const a of SES.ai)dot(a.x,a.z,3.2,a.color);
+  for(const a of SES.ai)dot(a.x,a.z,3.2,a.color);if(SES.remotes)for(const r of SES.remotes)if(!r.left)dot(r.x,r.z,4,r.color);
   if(SES.player){dot(SES.player.x,SES.player.z,5.5,'#fff');dot(SES.player.x,SES.player.z,3.5,'#b14bff')}}
 function towerRow(pos,c,gap,me){return`<div class="tr${me?' me':''}"><span>${pos}</span><i style="background:${c.color}"></i><span>${esc(c.code)}</span><span class="g">${gap}</span></div>`}
 function updateHUD(dt){
@@ -1144,7 +1153,7 @@ function closePit(){$('#pitov').hidden=true}
 /* =================== pause =================== */
 function togglePause(){if(!SES)return;SES.paused=!SES.paused;$('#pause').hidden=!SES.paused;
   if(SES.paused){setEngine(0,0,false);const t=SES.type;$('#pauseInfo').textContent=t==='watch'?'Ghost replay':(SES.def.gp+' · '+{practice:'Practice',quali:'Qualifying',race:'Grand Prix'}[t]);
-    $('#pEnd').textContent=t==='race'?'Retire from race':'End session';$('#pEnd').hidden=t==='watch';$('#pRestart').textContent=t==='watch'?'Restart replay':'Restart session';$('#pResume').focus()}}
+    $('#pEnd').textContent=t==='race'?'Retire from race':'End session';$('#pRestart').hidden=!!SES.mp;$('#pQuit').textContent=SES.mp?'Back to lobby':'Quit to menu';$('#pEnd').hidden=t==='watch';$('#pRestart').textContent=t==='watch'?'Restart replay':'Restart session';$('#pResume').focus()}}
 function controlsHTML(){return[['↑ / W','Throttle'],['↓ / S','Brake · reverse when stopped'],['← → / A D','Steer'],['Shift','Deploy ERS boost'],['C','Change camera'],['P','Box this lap (pit stop)'],['R','Reset car to track'],['Space / Esc','Pause'],['M','Mute']].map(([k,d])=>`<kbd>${k}</kbd><span>${d}</span>`).join('')}
 
 /* =================== hidden developer menu =================== */
@@ -1197,7 +1206,7 @@ function renderGarage(dt){if(!['menu','garage'].includes(screenName))return;gAng
 function go(name){screenName=name;$$('.scr').forEach(s=>s.hidden=true);$('#hud').hidden=true;$('#pause').hidden=true;$('#pitov').hidden=true;
   if(name!=='drive'){setEngine(0,0,false);const el=$('#scr-'+name);if(el)el.hidden=false}
   $$('.cr').forEach(e=>e.textContent=S.credits.toLocaleString());$('#mCredits').textContent=S.credits.toLocaleString();
-  ({menu:renderMenu,tracks:renderTracks,weekend:renderWeekend,career:renderCareer,garage:renderGarageUI,ghosts:renderGhosts,settings:renderSettings,results:renderResults,games:renderGames}[name]||(()=>{}))()}
+  ({menu:renderMenu,tracks:renderTracks,weekend:renderWeekend,career:renderCareer,garage:renderGarageUI,ghosts:renderGhosts,settings:renderSettings,results:renderResults,games:renderGames,mp:renderMP}[name]||(()=>{}))()}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go)});
 
 function drawMap(cv,id,col='#eef1f5',lw=3){const dpr=Math.min(2,devicePixelRatio||1),w=cv.clientWidth||240,h=cv.clientHeight||130;cv.width=w*dpr;cv.height=h*dpr;const x=cv.getContext('2d');x.scale(dpr,dpr);
@@ -1258,13 +1267,13 @@ function finishSession(reason){
   if(type==='race'){
     const T=SES.T,tot=SES.totalLaps*T.L,avgP=SES.stats.dist/Math.max(1,SES.raceTime);
     const rows=SES.cars.map(o=>{let time,dnf=false;
-      if(o.isPlayer&&reason==='retire'){dnf=true;time=1e9}
+      if((o.isPlayer&&reason==='retire')||o.left){dnf=true;time=1e9}
       else if(o.finished)time=o.finishTime;
-      else{const rem=Math.max(0,tot-progress(o)),spd=o.isPlayer?Math.max(20,avgP):(o.last?T.L/o.last:T.L/(SES.prof.t/o.pace));time=SES.raceTime+rem/spd+(o.pit>0?o.pit:0)}
+      else{const rem=Math.max(0,tot-progress(o)),spd=o.isPlayer?Math.max(20,avgP):o.isRemote?(o.last?T.L/o.last:40):(o.last?T.L/o.last:T.L/(SES.prof.t/o.pace));time=SES.raceTime+rem/spd+(o.pit>0?o.pit:0)}
       if(o._forceBehind)time=Math.max(time,c.finishTime+0.8+Math.random()*12);
       time+=o.penalty||0;
       const best=o.isPlayer?(SES.stats.laps.length?Math.min(...SES.stats.laps.map(l=>l.time)):null):o.best;
-      return{...dInfo(o.id),id:o.id,time,dnf,best,pits:o.pits||0,me:o.isPlayer,pen:o.penalty||0}});
+      return{...(o.isRemote?{name:o.name,team:'Online · #'+o.num,color:o.color,num:o.num}:o.isPlayer&&SES.mp?{...dInfo('p'),team:'Online · #'+mpNum()}:dInfo(o.id)),id:o.id,time,dnf,best,pits:o.pits||0,me:o.isPlayer,pen:o.penalty||0}});
     rows.sort((a,b)=>a.time-b.time);let fl=null;rows.forEach(r=>{if(r.best&&(!fl||r.best<fl.best))fl=r});
     rows.forEach((r,i)=>{r.pos=i+1;r.gap=i?r.time-rows[0].time:0;r.pts=r.dnf?0:(POINTS[i]||0)+(fl&&fl.id===r.id&&i<10?1:0);r.fl=fl&&fl.id===r.id});
     res.rows=rows;const me=rows.find(r=>r.me),pos=me.pos;res.pos=pos;res.dnf=me.dnf;res.fl=fl&&fl.me;
@@ -1273,7 +1282,7 @@ function finishSession(reason){
     S.credits+=cr;if(pos===1&&!me.dnf){S.wins++;txt+=' · Race win! ('+S.wins+' total)'}res.reward={credits:cr,text:txt,pts:me.pts};
     S.history.push({track:def.id,pos:me.dnf?null:pos,grid,best:me.best,date:Date.now(),mode});if(S.history.length>60)S.history.shift();
     if(mode==='career'){const C=S.career;rows.forEach(r=>C.points[r.id]=(C.points[r.id]||0)+r.pts);C.results[WK.round]={pos:me.dnf?null:pos,grid,pts:me.pts,best:me.best};C.round++;if(C.round>=TRACKS.length)C.done=true}
-    WK.raceDone=true;
+    WK.raceDone=true;if(mode==='mp')mpRaceOver();
   }
   save();RES=res;clearCars();
   go('results');
@@ -1312,7 +1321,7 @@ const pairs=a=>{const o=[];for(let i=0;i<a.length;i+=2)o.push([a[i],a[i+1]]);ret
 function framesTrace(d){const o=[],k=S.settings.units==='mph'?2.237:3.6;for(let i=0;i<d.length;i+=5*4)o.push([d[i+4]/10,d[i+3]/10*k]);return o}
 $('#resSave').onclick=()=>{const r=RES;if(!r||!r.best)return;S.replays.push({id:'r'+Date.now(),track:r.def.id,time:r.best.time,frames:r.best.frames,s1:r.best.s1,s2:r.best.s2,s3:r.best.s3,tire:r.best.tire,date:Date.now(),label:SNAME[r.type]+' · '+TIRES[r.best.tire].n});
   if(S.replays.length>24)S.replays.shift();save();$('#resSave').disabled=true;$('#resSave').textContent='Saved to library';toast('Ghost saved')};
-$('#resCont').onclick=()=>{const r=RES;if(r.type==='race'){if(r.mode==='career')go('career');else go('tracks')}else go('weekend')};
+$('#resCont').onclick=()=>{const r=RES;if(r.type==='race'){if(r.mode==='career')go('career');else if(r.mode==='mp')go('mp');else go('tracks')}else go('weekend')};
 
 /* ---------- charts ---------- */
 function chartCtx(cv){const dpr=Math.min(2,devicePixelRatio||1),w=cv.clientWidth||300,h=cv.clientHeight||200;cv.width=w*dpr;cv.height=h*dpr;const x=cv.getContext('2d');x.scale(dpr,dpr);x.font='12px Saira, sans-serif';x.textBaseline='middle';return{x,w,h}}
@@ -1410,7 +1419,7 @@ function renderSettings(){$('#setList').innerHTML=`<div class="set"><label for="
 $('#pResume').onclick=()=>togglePause();
 $('#pRestart').onclick=()=>{const t=SES.type,o=SES.watch?{replay:SES.watch}:undefined;SES.ended=true;clearCars();$('#pause').hidden=true;enterDrive(t,o)};
 $('#pEnd').onclick=()=>{SES.paused=false;finishSession(SES.type==='race'?'retire':'complete')};
-$('#pQuit').onclick=()=>{SES.ended=true;clearCars();SES=null;go(!WK?'menu':WK.mode==='watch'?'ghosts':'weekend')};
+$('#pQuit').onclick=()=>{SES.ended=true;clearCars();SES=null;if(WK&&WK.mode==='mp')mpRaceOver();go(!WK?'menu':WK.mode==='watch'?'ghosts':WK.mode==='mp'?'mp':'weekend')};
 
 /* =================== boot =================== */
 function boot(){try{initGL()}catch(e){showFail(new Error('3D graphics (WebGL) are not available'));return}initGarage();buildRain();go('menu');requestAnimationFrame(frame);
@@ -2359,6 +2368,96 @@ MINIGAMES.push(
     ctrl:[['Mouse','Move your mallet'],['Arrows / W A S D','Move without a mouse'],['Esc / P','Pause']]},
   {id:'stk',name:'Tower Stack',tag:'Timing',glyph:'≡',color:'#7d6bff',desc:'Drop each sliding block onto the tower. Anything hanging over gets cut off. Perfect drops build a streak.',fmt:v=>v+' blocks',make:makeStack,
     ctrl:[['Space / click','Drop the block'],['Esc / P','Pause']]});
+/* =================== MULTIPLAYER: room codes, peer-to-peer via PeerJS =================== */
+const NET={peer:null,host:false,conn:null,conns:new Map(),players:[],myId:null,code:null,status:'',settings:{track:'bahrain',laps:5,weather:'dynamic'},states:{},inRace:false,tire:'medium',race:null};
+const PREVIEW=/claude\.ai$|claudeusercontent|anthropic/.test(location.hostname);
+function loadPeer(){return new Promise((res,rej)=>{if(window.Peer)return res();const add=(src,next)=>{const s=document.createElement('script');s.src=src;s.onload=()=>window.Peer?res():next();s.onerror=next;document.head.appendChild(s)};
+  add('https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js',()=>add('https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js',()=>rej(new Error('Could not download the multiplayer library. Your network may be blocking it.'))))})}
+function mpNum(){return clamp(parseInt(S.mpNum)||24,1,99)}
+function myInfo(){return{id:NET.myId,name:S.settings.name||'Driver',num:mpNum(),primary:S.livery.primary,secondary:S.livery.secondary,helmet:S.livery.helmet,pattern:S.livery.pattern}}
+function mpStatus(t){NET.status=t;const e=$('#mpStatus');if(e)e.textContent=t}
+const HEX=/^#[0-9a-f]{6}$/i;
+function sanitizeP(p,id){p=p||{};return{id:String(id),name:String(p.name||'Driver').slice(0,20),num:clamp(parseInt(p.num)||1,1,99),primary:HEX.test(p.primary)?p.primary:'#888888',secondary:HEX.test(p.secondary)?p.secondary:'#ffffff',helmet:HEX.test(p.helmet)?p.helmet:'#ffffff',pattern:PATTERNS.some(x=>x.k===p.pattern)?p.pattern:'solid'}}
+function cleanState(s){const n=v=>Number.isFinite(+v)?+v:0;return{x:n(s.x),z:n(s.z),h:n(s.h),u:n(s.u),d:clamp(n(s.d),-0.5,0.5),lap:n(s.lap)|0,s:n(s.s),f:!!s.f,ft:n(s.ft),ty:TIRES[s.ty]?s.ty:'medium',pit:!!s.pit,at:performance.now()}}
+function rtcOK(){return typeof RTCPeerConnection!=='undefined'}
+function previewNote(){return PREVIEW?'This Claude preview cannot make peer-to-peer connections. Open jacjones.net to play online.':''}
+async function hostRoom(){if(!rtcOK()){mpStatus('This browser does not support multiplayer.');return}if(PREVIEW){mpStatus(previewNote());return}mpStatus('Creating room…');try{await loadPeer()}catch(e){mpStatus(e.message);return}
+  const code=Array.from({length:5},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random()*32|0]).join('');const peer=new Peer('n24gp-'+code);NET.peer=peer;
+  peer.on('open',()=>{NET.host=true;NET.code=code;NET.myId='host';NET.players=[sanitizeP(myInfo(),'host')];mpStatus('Room open. Send the code to your friends.');renderMP()});
+  peer.on('connection',conn=>{conn.on('data',d=>hostData(conn,d));conn.on('close',()=>dropPlayer(conn.peer));conn.on('error',()=>dropPlayer(conn.peer))});
+  peer.on('error',e=>{if(e.type==='unavailable-id'){leaveRoom(true);hostRoom()}else mpErr(e)});peer.on('disconnected',()=>{try{peer.reconnect()}catch(x){}})}
+async function joinRoom(code){code=String(code||'').trim().toUpperCase();if(!/^[A-Z0-9]{5}$/.test(code)){mpStatus('Enter the 5-character room code.');return}if(!rtcOK()){mpStatus('This browser does not support multiplayer.');return}if(PREVIEW){mpStatus(previewNote());return}
+  mpStatus('Joining '+code+'…');try{await loadPeer()}catch(e){mpStatus(e.message);return}const peer=new Peer();NET.peer=peer;
+  peer.on('open',id=>{NET.myId=id;const conn=peer.connect('n24gp-'+code,{reliable:true,serialization:'json'});NET.conn=conn;
+    const to=setTimeout(()=>{if(!NET.code){mpStatus('Could not reach that room. Check the code and that the host is still in the lobby.');leaveRoom(true)}},15000);
+    conn.on('open',()=>{clearTimeout(to);NET.code=code;NET.host=false;conn.send({t:'hello',p:myInfo()});mpStatus('Connected. Waiting for the host to start the race.');renderMP()});
+    conn.on('data',clientData);conn.on('close',()=>{if(NET.code){mpStatus('The host closed the room.');hostGone()}})});
+  peer.on('error',mpErr)}
+function mpErr(e){const m={'peer-unavailable':'No room with that code. Check it and try again.',network:'Network problem. Your connection or school network may be blocking multiplayer.','browser-incompatible':'This browser does not support multiplayer.','server-error':'The matchmaking server is busy. Try again in a moment.','socket-error':'Lost the matchmaking server. Try again.'}[e.type]||('Connection error: '+(e.type||e.message));
+  mpStatus(m);if(['peer-unavailable','network','server-error','socket-error','browser-incompatible'].includes(e.type)&&!NET.inRace)leaveRoom(true)}
+function leaveRoom(quiet){try{NET.conns.forEach(c=>c.close())}catch(x){}try{NET.conn&&NET.conn.close()}catch(x){}const p=NET.peer;Object.assign(NET,{peer:null,host:false,conn:null,conns:new Map(),players:[],myId:null,code:null,states:{},inRace:false,race:null});try{p&&p.destroy()}catch(x){}if(!quiet)mpStatus('');if(screenName==='mp')renderMP()}
+function bcast(m){NET.conns.forEach(c=>{try{if(c.open)c.send(m)}catch(x){}})}
+function lobbyMsg(){return{t:'lobby',players:NET.players,settings:NET.settings,inRace:NET.inRace}}
+function hostData(conn,d){if(!d||typeof d!=='object')return;
+  if(d.t==='hello'){if(NET.players.length>=10&&!NET.players.some(p=>p.id===conn.peer)){conn.send({t:'full'});setTimeout(()=>conn.close(),300);return}NET.conns.set(conn.peer,conn);NET.players=NET.players.filter(x=>x.id!==conn.peer).concat([sanitizeP(d.p,conn.peer)]);bcast(lobbyMsg());if(NET.inRace)conn.send({t:'busy'});mpSoft()}
+  else if(d.t==='st'&&d.s&&NET.conns.has(conn.peer))NET.states[conn.peer]=cleanState(d.s)}
+function dropPlayer(id){if(!NET.conns.has(id))return;NET.conns.delete(id);NET.players=NET.players.filter(p=>p.id!==id);delete NET.states[id];bcast(lobbyMsg());bcast({t:'left',id});markLeft(id);mpSoft()}
+function clientData(d){if(!d||typeof d!=='object')return;
+  if(d.t==='lobby'&&Array.isArray(d.players)){NET.players=d.players.slice(0,10).map(p=>sanitizeP(p,p.id));if(d.settings&&TRACKS.some(t=>t.id===d.settings.track))NET.settings={track:d.settings.track,laps:clamp(parseInt(d.settings.laps)||5,1,20),weather:['dynamic','dry','wet'].includes(d.settings.weather)?d.settings.weather:'dynamic'};mpSoft()}
+  else if(d.t==='start')mpStart(d);
+  else if(d.t==='snap'&&d.s&&typeof d.s==='object'){for(const id in d.s)if(id!==NET.myId)NET.states[id]=cleanState(d.s[id])}
+  else if(d.t==='left'){delete NET.states[d.id];markLeft(d.id)}
+  else if(d.t==='full'){mpStatus('That room is full (10 drivers).');leaveRoom(true)}
+  else if(d.t==='busy')mpStatus('A race is already running. You will be in the next one.')}
+function hostGone(){if(SES&&SES.mp&&screenName==='drive')setMsg('Host left','The room has closed',3);leaveRoom(true)}
+function mpSoft(){if(screenName==='mp')renderMP()}
+function hostStart(){if(!NET.host)return;const def=TRACKS.find(t=>t.id===NET.settings.track),laps=NET.settings.laps,wx=makeWeather(def,NET.settings.weather,laps*120+200);
+  const msg={t:'start',track:def.id,laps,sched:wx.sched,grid:NET.players.map(p=>p.id).sort(()=>Math.random()-0.5),players:NET.players,goT:5+rnd(0.4,2)};bcast(msg);mpStart(msg)}
+function mpStart(d){const def=TRACKS.find(t=>t.id===d.track);if(!def||!Array.isArray(d.grid)||!Array.isArray(d.sched))return;NET.inRace=true;
+  NET.race={players:(d.players||[]).map(p=>sanitizeP(p,p.id))};const sched=d.sched.slice(0,200).map(s=>({t:+s.t||0,i:clamp(+s.i||0,0,1)}));
+  WK={id:def.id,mode:'mp',round:null,wx:{race:{sched},practice:{sched},quali:{sched}},tire:NET.tire||'medium',grid:d.grid.map(String),form:{},laps:clamp(parseInt(d.laps)||5,1,20),goT:clamp(+d.goT||6,5,8)};
+  NET.states={};if(SES&&!SES.ended){SES.ended=true;clearCars();SES=null}if(devOpen)toggleDev();enterDrive('race')}
+function makeRemote(T,p,s0,lat){const q=ptAt(T,s0,lat),code=(p.name.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase())||('#'+p.num);
+  const r={isRemote:true,id:p.id,name:p.name,code,num:p.num,color:p.primary,x:q.x,z:q.z,h:q.h,u:0,lap:0,s:wrapS(T,s0),cp:[],finished:false,finishTime:null,pits:0,penalty:0,speed:0,pit:0,frozen:0,tire:'medium',best:null,last:null,team:{n:'#'+p.num}};
+  r.mesh=makeCar({primary:p.primary,secondary:p.secondary,helmet:p.helmet,pattern:p.pattern,num:p.num,tire:'medium'});scene.add(r.mesh);return r}
+function markLeft(id){if(!SES||!SES.remotes)return;const r=SES.remotes.find(x=>x.id===id);if(r&&!r.finished){r.left=true;r.mesh.visible=false}}
+function updateRemotes(dt){const now=performance.now();for(const r of SES.remotes){const s=NET.states[r.id];if(!s||r.left)continue;const age=Math.min(0.3,(now-s.at)/1000),tx=s.x+Math.cos(s.h)*s.u*age,tz=s.z+Math.sin(s.h)*s.u*age,k=Math.min(1,dt*10);
+    if(Math.hypot(tx-r.x,tz-r.z)>25){r.x=tx;r.z=tz;r.h=s.h}else{r.x+=(tx-r.x)*k;r.z+=(tz-r.z)*k;let dh=s.h-r.h;dh=Math.atan2(Math.sin(dh),Math.cos(dh));r.h+=dh*k}
+    r.u=r.speed=s.u;if(s.lap>r.lap&&r.lap>=1){const t=SES.raceTime-(r.lapStart||0);r.last=t;if(!r.best||t<r.best)r.best=t}if(s.lap!==r.lap)r.lapStart=SES.raceTime;r.lap=s.lap;r.s=s.s;r.pit=s.pit?1:0;
+    if(r.tire!==s.ty){r.tire=s.ty;setCarTire(r.mesh,r.tire)}if(s.f&&!r.finished){r.finished=true;r.finishTime=s.ft;SES.finishOrder.push(r.id)}poseCar(r.mesh,r.x,r.z,r.h,s.d,r.u*dt/0.34)}
+  const c=SES.player;if(DEV.noCollide||c.frozen>0)return;for(const r of SES.remotes){if(r.left)continue;const dx=c.x-r.x,dz=c.z-r.z,d=Math.hypot(dx,dz);if(d<2.2&&d>0){const p=(2.2-d)*0.6;c.x+=dx/d*p;c.z+=dz/d*p;c.u*=0.985;if(!r._hitT||SES.time-r._hitT>1){r._hitT=SES.time;SES.stats.collisions++;camState.shake=0.4}}}}
+setInterval(()=>{if(!NET.code)return;const c=SES&&SES.mp&&!SES.ended?SES.player:null;let s=null;
+  if(c)s={x:+c.x.toFixed(2),z:+c.z.toFixed(2),h:+c.h.toFixed(3),u:+c.u.toFixed(2),d:+c.delta.toFixed(3),lap:c.lap,s:+c.s.toFixed(1),f:c.finished,ft:c.finishTime||0,ty:c.tire,pit:c.frozen>0};
+  if(NET.host){if(s)NET.states.host=cleanState(s);const out={};for(const id in NET.states){const q=NET.states[id];out[id]={x:q.x,z:q.z,h:q.h,u:q.u,d:q.d,lap:q.lap,s:q.s,f:q.f,ft:q.ft,ty:q.ty,pit:q.pit}}if(NET.inRace)bcast({t:'snap',s:out})}
+  else if(s&&NET.conn&&NET.conn.open){try{NET.conn.send({t:'st',s})}catch(x){}}},66);
+function mpRaceOver(){NET.inRace=false;if(NET.host){NET.states={};bcast(lobbyMsg())}}
+
+/* ---------- lobby screen ---------- */
+function renderMP(){const el=$('#mpBody');if(!el)return;
+  if(!NET.code){el.innerHTML=`<div class="two"><div class="card col"><h3>Your car</h3>
+      <div class="set"><label for="mpName">Driver name</label><input type="text" id="mpName" maxlength="20" value="${esc(S.settings.name||'')}"></div>
+      <div class="set"><label for="mpNumIn">Car number</label><input type="text" id="mpNumIn" inputmode="numeric" maxlength="2" value="${mpNum()}" style="width:70px"></div>
+      <p class="muted" style="font-size:13px;margin:0">Everyone sees your Garage livery and number.</p></div>
+    <div class="card col"><h3>Race your friends</h3><button class="btn primary" id="mpHost">Create a room</button>
+      <div class="row"><input type="text" id="mpCode" maxlength="5" placeholder="Room code" autocomplete="off" style="text-transform:uppercase;width:150px;font-size:18px;letter-spacing:.12em"><button class="btn" id="mpJoin">Join room</button></div>
+      <p id="mpStatus" style="font-size:14px;margin:0;color:var(--yellow)">${esc(NET.status||previewNote())}</p>
+      <p class="muted" style="font-size:12px;margin:0">Up to 10 drivers. Everyone opens jacjones.net, one person creates a room, the others join with its code. Some school networks block peer-to-peer connections.</p></div></div>`;
+    $('#mpName').onchange=e=>{S.settings.name=e.target.value.trim().slice(0,20)||'Driver 24';save()};$('#mpNumIn').onchange=e=>{S.mpNum=clamp(parseInt(e.target.value)||24,1,99);e.target.value=S.mpNum;save()};
+    $('#mpHost').onclick=hostRoom;$('#mpJoin').onclick=()=>joinRoom($('#mpCode').value);$('#mpCode').onkeydown=e=>{if(e.key==='Enter')joinRoom(e.target.value)};return}
+  const S2=NET.settings,def=TRACKS.find(t=>t.id===S2.track)||TRACKS[0],seg=(k,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-ms="${k}" data-mv="${v}" class="${String(S2[k])===String(v)?'on':''}" ${NET.host?'':'disabled'}>${l}</button>`).join('')}</div>`;
+  el.innerHTML=`<div class="two"><div class="card col"><div class="eyebrow">Room code</div><div class="row"><div class="mpcode num">${esc(NET.code)}</div><button class="btn small" id="mpCopy">Copy</button></div>
+      <h3>Drivers (${NET.players.length}/10)</h3><div class="tscroll"><table>${NET.players.map(p=>`<tr class="${p.id===NET.myId?'me':''}"><td><span class="teamdot" style="background:${p.primary}"></span>#${p.num}</td><td>${esc(p.name)}</td><td class="muted">${p.id==='host'?'Host':''}${p.id===NET.myId?' (you)':''}</td></tr>`).join('')}</table></div>
+      <button class="btn small" id="mpLeave">Leave room</button></div>
+    <div class="card col"><h3>Race settings</h3>${NET.host?'':'<p class="muted" style="margin:0;font-size:13px">The host picks the circuit and rules.</p>'}
+      <div class="set"><span>Circuit</span><select id="mpTrack" ${NET.host?'':'disabled'}>${TRACKS.map(t=>`<option value="${t.id}" ${t.id===def.id?'selected':''}>${esc(t.gp)}</option>`).join('')}</select></div>
+      <div class="set"><span>Laps</span>${seg('laps',[[3,'3'],[5,'5'],[8,'8'],[12,'12']])}</div><div class="set"><span>Weather</span>${seg('weather',[['dynamic','Dynamic'],['dry','Dry'],['wet','Wet']])}</div>
+      <h3>Your tyres</h3><div class="tyres" id="mpTyres">${TKEYS.map(k=>`<div class="tyre-wrap"><button class="tyre${NET.tire===k?' sel':''}" style="--c:${TIRES[k].c}" data-t="${k}">${TIRES[k].l}</button>${TIRES[k].n}</div>`).join('')}</div>
+      ${NET.host?`<button class="btn primary" id="mpStart" ${NET.inRace?'disabled':''}>Start race</button>`:'<p style="margin:0">Waiting for the host to start…</p>'}<p id="mpStatus" class="muted" style="font-size:14px;margin:0">${esc(NET.status)}</p></div></div>`;
+  $('#mpCopy').onclick=()=>{try{navigator.clipboard.writeText(NET.code).then(()=>toast('Code copied'),()=>toast('Code: '+NET.code))}catch(e){toast('Code: '+NET.code)}};
+  $('#mpLeave').onclick=()=>leaveRoom();$$('#mpTyres .tyre').forEach(b=>b.onclick=()=>{NET.tire=b.dataset.t;renderMP()});
+  if(NET.host){$('#mpTrack').onchange=e=>{NET.settings.track=e.target.value;bcast(lobbyMsg())};$$('[data-ms]').forEach(b=>b.onclick=()=>{const k=b.dataset.ms;NET.settings[k]=k==='laps'?+b.dataset.mv:b.dataset.mv;bcast(lobbyMsg());renderMP()});$('#mpStart').onclick=hostStart}}
+$('#mpBack').onclick=()=>{leaveRoom(true);go('menu')};
+addEventListener('beforeunload',()=>{try{NET.peer&&NET.peer.destroy()}catch(x){}});
 }
 (function(){
   var srcs=['https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js','https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js','https://unpkg.com/three@0.128.0/build/three.min.js'];
