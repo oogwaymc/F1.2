@@ -2778,6 +2778,79 @@ renderGames=function(){const list=MINIGAMES.concat([POLY]).filter(g=>gFilter==='
 {const _go=go;go=function(name){_go(name);const tab=NAVTAB[name];$('#topnav').hidden=!tab;$('#ui').classList.toggle('nav-on',!!tab);$$('#topnav [data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   if(name==='racing')renderRacing();const on=$('#topnav [data-tab].on');if(on&&on.scrollIntoView)try{on.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}}
 addEventListener('resize',()=>{if(screenName==='games')$$('#gamesGrid canvas[data-art]').forEach(cv=>{const id=cv.dataset.art;gameArt(cv,id==='poly'?POLY:MINIGAMES.find(g=>g.id===id))})});
+/* =================== touch controls (phones and tablets) =================== */
+const TOUCH={on:false};
+(function(){
+  let fine=false;try{fine=matchMedia('(pointer: fine)').matches}catch(e){}
+  try{TOUCH.on=matchMedia('(pointer: coarse)').matches||(!fine&&navigator.maxTouchPoints>0)}catch(e){}
+  const css=document.createElement('style');
+  css.textContent=`
+#tc{position:fixed;inset:0;z-index:30;pointer-events:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-family:var(--display,system-ui);touch-action:none}
+#tc button{pointer-events:auto;touch-action:none;-webkit-tap-highlight-color:transparent;border:2px solid rgba(255,255,255,.28);background:rgba(12,14,18,.42);color:#fff;font:800 15px/1 var(--display,system-ui);letter-spacing:.08em;text-transform:uppercase;border-radius:18px;display:grid;place-items:center;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);transition:background .06s,transform .06s}
+#tc button.down{background:rgba(177,75,255,.6);border-color:#d7a6ff;transform:scale(.96)}
+#tc .tc-steer{position:absolute;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:12px}
+#tc .tc-steer button{width:clamp(76px,11vw,104px);height:clamp(76px,11vw,104px);font-size:32px}
+#tc .tc-ped{position:absolute;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:12px;align-items:flex-end}
+#tc .tc-brk{width:clamp(78px,12vw,104px);height:clamp(78px,12vw,104px)}
+#tc .tc-thr{width:clamp(86px,13vw,116px);height:clamp(120px,20vw,170px);background:rgba(36,170,90,.38)}
+#tc .tc-thr.down{background:rgba(36,200,100,.7);border-color:#9dffc4}
+#tc .tc-brk{background:rgba(220,50,50,.34)}
+#tc .tc-brk.down{background:rgba(240,60,60,.7);border-color:#ffb3b3}
+#tc .tc-ers{position:absolute;right:calc(26px + env(safe-area-inset-right,0px) + clamp(86px,13vw,116px));bottom:calc(26px + env(safe-area-inset-bottom,0px) + clamp(78px,12vw,104px));width:clamp(78px,12vw,104px);height:48px;font-size:13px}
+#tc .tc-small{position:absolute;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px) + clamp(76px,11vw,104px));display:flex;gap:8px}
+#tc .tc-small button{width:56px;height:44px;font-size:11px;border-radius:12px}
+#tc .tc-pause{position:absolute;left:calc(14px + env(safe-area-inset-left,0px));top:calc(14px + env(safe-area-inset-top,0px));width:52px;height:44px;border-radius:12px;font-size:16px}
+#tc .tc-rot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(12,14,18,.75);color:#fff;padding:12px 16px;border-radius:12px;font:600 14px system-ui;text-align:center;display:none}
+@media (orientation:portrait){#tc .tc-rot{display:block}}
+body.touch #keys{display:none!important}
+body.touch #minimap{width:120px;height:120px;top:calc(84px + env(safe-area-inset-top,0px));bottom:auto}
+body.touch #tower{transform:scale(.8);transform-origin:top left;top:70px}
+body.touch #pitflag{bottom:auto;top:calc(50% - 20px)}
+body.touch #speedo{transform:translateX(-50%) scale(.75);transform-origin:bottom center;bottom:10px}
+@media (max-height:500px){body.touch #tower{display:none}body.touch #wxhud{transform:scale(.8);transform-origin:top right}body.touch #sectors{display:none}}
+`;
+  document.head.appendChild(css);
+  const tc=document.createElement('div');tc.id='tc';tc.hidden=true;
+  tc.innerHTML=`<div class="tc-steer"><button data-h="ArrowLeft" aria-label="Steer left">&#9664;</button><button data-h="ArrowRight" aria-label="Steer right">&#9654;</button></div>
+<div class="tc-small"><button data-k="KeyC">Cam</button><button data-k="KeyR">Reset</button><button data-k="KeyP">Pit</button></div>
+<button class="tc-pause" data-k="Escape" aria-label="Pause">II</button>
+<button class="tc-ers" data-h="ShiftLeft">ERS</button>
+<div class="tc-ped"><button class="tc-brk" data-h="ArrowDown">Brake</button><button class="tc-thr" data-h="ArrowUp">Go</button></div>
+<div class="tc-rot">Turn your phone sideways<br>for the best controls</div>`;
+  document.body.appendChild(tc);
+  const ptr=new Map();// pointerId -> button element (hold buttons)
+  const holds=[...tc.querySelectorAll('[data-h]')];
+  function refresh(){const on=new Set(ptr.values());holds.forEach(b=>{const d=on.has(b);b.classList.toggle('down',d);K[b.dataset.h]=d})}
+  function holdAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest?el.closest('#tc [data-h]'):null}
+  tc.addEventListener('pointerdown',e=>{
+    const b=e.target.closest('button');if(!b)return;e.preventDefault();
+    if(b.dataset.k){b.classList.add('down');setTimeout(()=>b.classList.remove('down'),120);
+      dispatchEvent(new KeyboardEvent('keydown',{code:b.dataset.k,key:b.dataset.k}));dispatchEvent(new KeyboardEvent('keyup',{code:b.dataset.k,key:b.dataset.k}));return}
+    try{tc.setPointerCapture(e.pointerId)}catch(_){}
+    ptr.set(e.pointerId,b);refresh();
+    if(navigator.vibrate&&b.dataset.h!=='ArrowUp')try{navigator.vibrate(8)}catch(_){}
+  });
+  tc.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId))return;const b=holdAt(e.clientX,e.clientY);if(b&&b!==ptr.get(e.pointerId)){ptr.set(e.pointerId,b);refresh()}});
+  const end=e=>{if(ptr.delete(e.pointerId))refresh()};
+  tc.addEventListener('pointerup',end);tc.addEventListener('pointercancel',end);tc.addEventListener('lostpointercapture',end);
+  tc.addEventListener('contextmenu',e=>e.preventDefault());
+  // Switch modes: any touch turns touch controls on, a real key press turns them off
+  addEventListener('touchstart',e=>{
+    if(!TOUCH.on){TOUCH.on=true;sync()}
+    // Hidden: three-finger tap while driving toggles the dev menu
+    if(e.touches.length===3&&screenName==='drive'&&SES){toggleDev()}
+  },{passive:true});
+  addEventListener('keydown',e=>{if(e.isTrusted&&TOUCH.on&&!/^(Shift|Control|Alt|Meta)/.test(e.code)){TOUCH.on=false;sync()}},true);
+  // Pit stop: tapping a tyre confirms it
+  document.addEventListener('click',e=>{if(TOUCH.on&&e.target.closest&&e.target.closest('#pitTyres .tyre')&&typeof pitUI!=='undefined')pitUI.locked=true});
+  function sync(){
+    document.body.classList.toggle('touch',TOUCH.on);
+    const ph=document.querySelector('#pitov p:last-child');if(ph)ph.textContent=TOUCH.on?'Tap a tyre to choose it':'\u2190/\u2192 to pick, Enter to confirm';
+    const show=TOUCH.on&&screenName==='drive'&&!!SES&&!SES.paused&&!devOpen&&SES.type!=='watch'&&SES.state!=='done';
+    if(tc.hidden===show){tc.hidden=!show;if(!show){ptr.clear();refresh()}}
+  }
+  setInterval(sync,150);sync();
+})();
 }
 (function(){
   var srcs=['https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js','https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js','https://unpkg.com/three@0.128.0/build/three.min.js'];
