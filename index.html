@@ -19,6 +19,7 @@
   --body:"Saira",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:dark;
 }
+[hidden]{display:none!important}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);overflow:hidden}
 *{box-sizing:border-box}
 button{font:inherit;color:inherit}
@@ -259,6 +260,73 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
 @media (max-width:700px){
   #tower{width:150px;font-size:13px}#minimap{width:120px;height:120px}#spd,#gear{font-size:40px}.bars{width:110px}#wxhud{min-width:0}#keys{display:none}
 }
+
+/* ---------- redesign: navigation, home, hubs, library ---------- */
+#topnav{position:absolute;left:0;right:0;top:0;height:60px;z-index:20;display:flex;align-items:center;gap:clamp(10px,2vw,28px);padding:0 clamp(16px,4vw,56px);
+  background:rgba(10,12,16,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);pointer-events:auto}
+.tn-brand{display:flex;align-items:baseline;gap:8px;background:none;border:0;cursor:pointer;padding:0;flex:none}
+.tn-brand b{font-family:var(--display);font-weight:800;font-style:italic;font-size:30px;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--accent)}
+.tn-brand span{font-family:var(--display);font-weight:800;font-style:italic;text-transform:uppercase;font-size:17px;letter-spacing:.02em}
+.tn-tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;height:100%}
+.tn-tabs::-webkit-scrollbar{display:none}
+.tn-tabs button{flex:none;background:none;border:0;border-bottom:3px solid transparent;padding:0 12px;cursor:pointer;font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);height:100%}
+.tn-tabs button:hover{color:var(--fg)}.tn-tabs button.on{color:var(--fg);border-bottom-color:var(--accent)}
+.tn-right{display:flex;align-items:center;gap:16px;flex:none}
+.tn-ext{font-family:var(--display);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:5px 10px}
+.tn-ext::after{content:" ↗"}.tn-ext:hover{color:var(--fg);border-color:var(--fg)}
+.tn-cr{font-family:var(--display);font-weight:600;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.tn-cr b{color:var(--yellow);font-size:20px;letter-spacing:0;margin-right:2px}
+#ui.nav-on .scr{padding-top:88px}
+#ui.nav-on .topbar .credits,#ui.nav-on .back[data-go="menu"],#ui.nav-on #mpBack{display:none}
+@media (max-width:760px){.tn-brand span,.tn-ext{display:none}.tn-tabs button{padding:0 9px;font-size:14px}.tn-cr{font-size:0}.tn-cr b{font-size:18px}}
+.scr:not([hidden]){animation:scrIn .24s ease-out}
+@keyframes scrIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+#scr-menu{display:block}
+.home{display:flex;flex-direction:column;justify-content:space-between;gap:40px;min-height:100%}
+.hero{display:flex;flex-direction:column;gap:18px;max-width:600px;padding-top:clamp(8px,4vh,48px)}
+.hero-t{display:flex;align-items:flex-end;gap:18px;font-style:normal;line-height:.82}
+.hero-t .no{font-family:var(--display);font-weight:800;font-style:italic;font-size:clamp(110px,17vw,200px);line-height:.78;color:transparent;-webkit-text-stroke:2px var(--accent)}
+.hero-t .gp{font-family:var(--display);font-weight:800;font-style:italic;text-transform:uppercase;font-size:clamp(44px,6.5vw,78px);line-height:.86;padding-bottom:6px}
+.hero-sub{margin:0;color:#c9d0db;font-size:16px;max-width:46ch;line-height:1.5}
+.hero-cta{display:flex;flex-wrap:wrap;gap:10px}
+.hstats{display:flex;flex-wrap:wrap;gap:28px;padding-top:6px}
+.hstats div span{display:block;font-family:var(--display);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.hstats div b{font-family:var(--display);font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.feat-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.linkbtn{background:none;border:0;cursor:pointer;font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--fg);padding:4px 0;border-bottom:2px solid var(--accent)}
+.linkbtn::after{content:" →"}
+.feat-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+@media (max-width:1000px){.feat-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.feat-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ftile{position:relative;display:block;aspect-ratio:4/3;max-width:100%;border:1px solid var(--line);background:var(--panel);cursor:pointer;overflow:hidden;padding:0;text-align:left;transition:transform .15s,border-color .15s}
+.ftile canvas{position:absolute;inset:0;width:100%;height:100%}
+.ftile .ft-t{position:absolute;left:10px;right:10px;bottom:8px;font-family:var(--display);font-weight:800;font-style:italic;text-transform:uppercase;font-size:20px;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.ftile .ft-s{display:block;font-family:var(--body);font-style:normal;font-weight:500;font-size:12px;text-transform:none;color:#dfe4ec;margin-top:4px}
+.ftile:hover,.ftile:focus-visible,.gcard:hover,.rcard:hover{transform:translateY(-3px);border-color:var(--accent)}
+.ftile.all{display:grid;place-items:center;background:var(--panel2)}.ftile.all span{font-family:var(--display);font-weight:800;font-style:italic;text-transform:uppercase;font-size:22px;text-align:center}
+
+.rhub{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:14px}
+.rcard{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);cursor:pointer;text-align:left;padding:0;overflow:hidden;transition:transform .15s,border-color .15s;min-width:0}
+.rcard canvas{width:100%;height:150px;display:block;background:linear-gradient(135deg,#1b1f27,#101318)}
+.rcard .rc-b{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px}
+.rcard .disp{font-size:28px;font-weight:800;font-style:italic;text-transform:uppercase}
+.rcard p{margin:0;color:var(--muted);font-size:14px}
+.rcard .rc-k{font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--yellow)}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{background:var(--panel);border:1px solid var(--line);padding:7px 14px;cursor:pointer;font-family:var(--display);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.chips button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+#gamesGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:14px}
+.gcard{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);min-width:0;cursor:pointer;text-align:left;padding:0;overflow:hidden;transition:transform .15s,border-color .15s;text-decoration:none;color:var(--fg)}
+.gcard .gc-art{position:relative;aspect-ratio:16/9;max-width:100%}
+.gcard canvas{position:absolute;inset:0;width:100%;height:100%}
+.gbadges{position:absolute;left:10px;top:10px;display:flex;gap:6px}
+.gbadges span{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;background:rgba(10,12,16,.75)}
+.gbadges span.on{background:var(--accent)}
+.gcard .gc-b{display:flex;flex-direction:column;gap:6px;padding:12px 14px 14px;flex:1}
+.gcard .disp{font-size:24px;font-weight:800;font-style:italic;text-transform:uppercase;line-height:1}
+.gcard p{margin:0;font-size:13px;color:var(--muted);line-height:1.45;flex:1}
+.gcard .kv{border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -295,29 +363,39 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
 <div id="app" hidden>
   <canvas id="gl"></canvas>
   <div id="ui">
+    <nav id="topnav" hidden>
+      <button class="tn-brand" data-go="menu" aria-label="Home"><b>24</b><span>Grand Prix</span></button>
+      <div class="tn-tabs">
+        <button data-go="menu" data-tab="menu">Home</button><button data-go="racing" data-tab="racing">Racing</button><button data-go="games" data-tab="games">Games</button><button data-go="mp" data-tab="mp">Online</button><button data-go="garage" data-tab="garage">Garage</button><button data-go="settings" data-tab="settings">Settings</button>
+      </div>
+      <div class="tn-right"><a class="tn-ext" href="https://polytrack.jacjones.net">PolyTrack</a><span class="tn-cr num"><b class="cr">0</b> credits</span></div>
+    </nav>
     <!-- MAIN MENU -->
     <section class="scr shade" id="scr-menu" hidden>
-      <div class="brand">
-        <div class="eyebrow">Formula racing season</div>
-        <div class="no">24</div>
-        <h1>Grand Prix</h1>
+      <div class="home">
+        <div class="hero">
+          <div class="eyebrow" id="hSeason">Season 1 · Round 1 of 6</div>
+          <h1 class="hero-t"><span class="no">24</span><span class="gp">Grand<br>Prix</span></h1>
+          <p class="hero-sub">Six real circuits, full race weekends, live online races with friends and twelve more games in one place.</p>
+          <div class="hero-cta"><button class="btn primary" id="hCareer">Continue career</button><button class="btn" data-go="tracks">Quick race</button><button class="btn" data-go="mp">Play online</button></div>
+          <div class="hstats" id="hStats"></div>
+        </div>
+        <div class="feat">
+          <div class="feat-h"><h3>Jump into a game</h3><button class="linkbtn" data-go="games">All games</button></div>
+          <div class="feat-row" id="featRow"></div>
+        </div>
       </div>
-      <div class="credits num">Credits <b id="mCredits">0</b></div>
-      <nav class="menu-list">
-        <button data-go="career">Career <small id="mCareerSub">Six-round championship</small></button>
-        <button data-go="mp">Multiplayer <small>Race friends online with a room code</small></button>
-        <button data-go="tracks">Quick Race <small>Any circuit, full weekend</small></button>
-        <button data-go="games">More Games <small>12 games: airsoft, build fights, shooters, sport and more</small></button>
-        <button data-go="garage">Garage <small>Upgrades and livery</small></button>
-        <button data-go="ghosts">Ghost Replays <small>Saved laps and comparisons</small></button>
-        <a class="menu-link" href="https://polytrack.jacjones.net">PolyTrack <small>Play on polytrack.jacjones.net</small></a>
-        <button data-go="settings">Settings <small>Graphics, assists, race rules</small></button>
-      </nav>
+    </section>
+
+    <section class="scr solid" id="scr-racing" hidden>
+      <div class="topbar"><div><div class="eyebrow">Formula racing</div><h2>Racing</h2></div></div>
+      <div class="rhub" id="rHub"></div>
+      <div class="card" style="margin-top:16px"><h3>Your circuit records</h3><div class="tscroll"><table id="rRecords" style="margin-top:8px"></table></div></div>
     </section>
 
     <!-- TRACK SELECT -->
     <section class="scr solid" id="scr-tracks" hidden>
-      <div class="topbar"><button class="back" data-go="menu">Back</button><h2>Choose a circuit</h2><span class="spacer"></span><div class="credits num">Credits <b class="cr">0</b></div></div>
+      <div class="topbar"><button class="back" data-go="racing">Racing</button><h2>Choose a circuit</h2><span class="spacer"></span><div class="credits num">Credits <b class="cr">0</b></div></div>
       <div class="grid-tracks" id="trackGrid"></div>
     </section>
 
@@ -341,7 +419,7 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
 
     <!-- CAREER -->
     <section class="scr solid" id="scr-career" hidden>
-      <div class="topbar"><button class="back" data-go="menu">Back</button><div><div class="eyebrow" id="cSeason"></div><h2>Championship</h2></div><span class="spacer"></span><div class="credits num">Credits <b class="cr">0</b></div></div>
+      <div class="topbar"><button class="back" data-go="racing">Racing</button><div><div class="eyebrow" id="cSeason"></div><h2>Championship</h2></div><span class="spacer"></span><div class="credits num">Credits <b class="cr">0</b></div></div>
       <div class="two">
         <div class="col">
           <div class="card"><div class="row"><h3>Calendar</h3><span class="spacer"></span><button class="btn primary small" id="cNext">Next round</button></div><div class="tscroll"><table id="cCal" style="margin-top:8px"></table></div></div>
@@ -364,7 +442,7 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
 
     <!-- GHOSTS -->
     <section class="scr solid" id="scr-ghosts" hidden>
-      <div class="topbar"><button class="back" data-go="menu">Back</button><h2>Ghost replays</h2></div>
+      <div class="topbar"><button class="back" data-go="racing">Racing</button><h2>Ghost replays</h2></div>
       <div class="two">
         <div class="card"><div class="row"><h3>Library</h3><span class="spacer"></span><span class="muted" style="font-size:13px">Tick two laps on the same circuit to compare</span></div><div class="tscroll"><table id="ghTable" style="margin-top:8px"></table></div></div>
         <div class="col">
@@ -404,7 +482,7 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
       <div id="mpBody"></div>
     </section>
     <section class="scr solid" id="scr-games" hidden>
-      <div class="topbar"><button class="back" data-go="menu">Back</button><div><div class="eyebrow">Beyond the track</div><h2>More games</h2></div></div>
+      <div class="topbar"><div><div class="eyebrow">Library</div><h2>Games</h2></div><span class="spacer"></span><div class="chips" id="gChips"></div></div>
       <div id="gamesGrid"></div>
     </section>
     <section class="scr" id="scr-mini" hidden><div id="miniHud"></div><div class="ov" id="miniPanel" hidden></div></section>
@@ -656,7 +734,7 @@ function makeCar(opt){
     const n1=new THREE.Mesh(q1,nm);n1.position.set(-0.85,0.64,0.285);g.add(n1);
     const n2=new THREE.Mesh(q1,nm);n2.position.set(-0.85,0.64,-0.285);n2.rotation.y=Math.PI;g.add(n2);
     const n3=new THREE.Mesh(q1,nm);n3.position.set(1.6,0.645,0);n3.rotation.set(-Math.PI/2,0,-Math.PI/2);n3.scale.set(0.6,0.6,1);g.add(n3);
-    if(!shadowMat)shadowMat=new THREE.MeshBasicMaterial({map:getShadowTex(),transparent:true,depthWrite:false});const sh=new THREE.Mesh(shadowGeo,shadowMat);sh.rotation.x=-Math.PI/2;sh.position.y=0.03;g.add(sh);
+    if(!shadowMat)shadowMat=new THREE.MeshBasicMaterial({map:getShadowTex(),transparent:true,depthWrite:false});const sh=new THREE.Mesh(shadowGeo,shadowMat);sh.rotation.x=-Math.PI/2;sh.position.y=0.08;g.add(sh);
   }
   g.userData={wheels,tire:opt.tire||'medium'};return g;
 }
@@ -686,16 +764,16 @@ function buildTrackMesh(T){
   for(let it=0;it<6;it++)for(let i=0;i<N;i++)if(kerbOn[i])kerbOn[(i+1)%N]=Math.max(kerbOn[(i+1)%N],0.99),kerbOn[(i-1+N)%N]=Math.max(kerbOn[(i-1+N)%N],0.99);
   roadMat=HQ()?new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2,map:getAsphalt(),shininess:25,specular:0x101010}):new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2,map:getAsphalt()});
   const nz=i=>((Math.sin(i*12.9898)*43758.5453)%1+1)%1;
-  g.add(ribbon(T,0,0,0,0,i=>{const v=0.22+nz(i)*0.025;return[v,v,v*1.04]},()=>-hw,()=>hw,roadMat));
-  g.add(ribbon(T,0,0,0,0,()=>[0.16,0.16,0.17],i=>T.line[i]-1.1,i=>T.line[i]+1.1,polyMat(-1.5,-4)));
+  g.add(ribbon(T,0,0,0.03,0.03,i=>{const v=0.22+nz(i)*0.025;return[v,v,v*1.04]},()=>-hw,()=>hw,roadMat));
+  g.add(ribbon(T,0,0,0.045,0.045,()=>[0.16,0.16,0.17],i=>T.line[i]-1.1,i=>T.line[i]+1.1,polyMat(-1.5,-4)));
   const lineMat=polyMat(-2,-6),white=()=>[0.92,0.92,0.92];
-  g.add(ribbon(T,0,0,0,0,white,()=>-hw+0.2,()=>-hw+0.45,lineMat));g.add(ribbon(T,0,0,0,0,white,()=>hw-0.45,()=>hw-0.2,lineMat));
+  g.add(ribbon(T,0,0,0.055,0.055,white,()=>-hw+0.2,()=>-hw+0.45,lineMat));g.add(ribbon(T,0,0,0.055,0.055,white,()=>hw-0.45,()=>hw-0.2,lineMat));
   const kerbCol=i=>(Math.floor(i/2)%2)?[0.85,0.1,0.1]:[0.95,0.95,0.95];
-  g.add(ribbon(T,0,0,0.04,0.04,kerbCol,()=>-hw,i=>-hw-1.4*kerbOn[i],lineMat));g.add(ribbon(T,0,0,0.04,0.04,kerbCol,()=>hw,i=>hw+1.4*kerbOn[i],lineMat));
+  g.add(ribbon(T,0,0,0.06,0.06,kerbCol,()=>-hw,i=>-hw-1.4*kerbOn[i],lineMat));g.add(ribbon(T,0,0,0.06,0.06,kerbCol,()=>hw,i=>hw+1.4*kerbOn[i],lineMat));
   // pit lane
   const pitMask=i=>inPit(T,i*T.ds),pitC=()=>[0.3,0.3,0.32];
-  g.add(ribbon(T,0,0,0,0,pitC,()=>-hw-1.4,()=>-hw-17,polyMat(-1,-2),pitMask));
-  g.add(ribbon(T,0,0,0,0,white,()=>-hw-15.2,()=>-hw-15.5,lineMat,pitMask));
+  g.add(ribbon(T,0,0,0.03,0.03,pitC,()=>-hw-1.4,()=>-hw-17,polyMat(-1,-2),pitMask));
+  g.add(ribbon(T,0,0,0.055,0.055,white,()=>-hw-15.2,()=>-hw-15.5,lineMat,pitMask));
   // barriers
   const monaco=def.scen==='city';
   const barMat=new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide});
@@ -705,8 +783,8 @@ function buildTrackMesh(T){
   // pit wall
   g.add(ribbon(T,0,0,0,1.1,()=>[0.75,0.76,0.78],()=>-hw-3,()=>-hw-3,barMat,i=>inWall(T,i*T.ds)));
   // start line + grid boxes
-  const cg=[];for(let r=0;r<2;r++)for(let c=0;c<Math.round(T.def.W/0.9);c++){if((r+c)%2)continue;const lat=-hw+0.45+c*0.9;const p=ptAt(T,r*0.9,lat);cg.push([G.box,0xf0f0f0,M(p.x,0.02,p.z,0,-p.h,0,0.9,0.02,0.9)])}
-  for(let k=0;k<20;k++){const p=ptAt(T,-12-k*8,(k%2?1:-1)*hw*0.42);cg.push([G.box,0xf0f0f0,M(p.x,0.02,p.z,0,-p.h,0,0.25,0.02,2.6)])}
+  const cg=[];for(let r=0;r<2;r++)for(let c=0;c<Math.round(T.def.W/0.9);c++){if((r+c)%2)continue;const lat=-hw+0.45+c*0.9;const p=ptAt(T,r*0.9,lat);cg.push([G.box,0xf0f0f0,M(p.x,0.07,p.z,0,-p.h,0,0.9,0.02,0.9)])}
+  for(let k=0;k<20;k++){const p=ptAt(T,-12-k*8,(k%2?1:-1)*hw*0.42);cg.push([G.box,0xf0f0f0,M(p.x,0.07,p.z,0,-p.h,0,0.25,0.02,2.6)])}
   // gantry
   const gp=ptAt(T,18,0),gl=ptAt(T,18,-hw-2.5),gr=ptAt(T,18,hw+2.5);
   cg.push([G.box,0x333840,M(gl.x,3.5,gl.z,0,-gp.h,0,0.5,7,0.5)],[G.box,0x333840,M(gr.x,3.5,gr.z,0,-gp.h,0,0.5,7,0.5)],[G.box,0x22262c,M(gp.x,6.6,gp.z,0,-gp.h,0,0.8,1.2,T.def.W+5)]);
@@ -1057,6 +1135,7 @@ function simulate(dt){
     if(SES.lightsT>=SES.goT){SES.state='run';lightsUI(-1);setMsg('Go!','',1);sfxBeep(990,0.3)}else if(n!==SES._ln){SES._ln=n;if(n>0)sfxBeep(440,0.12)}}
   if(SES.state!=='lights'&&type==='race')SES.raceTime+=dt;
   const I=inp();
+  if(!Number.isFinite(c.x+c.z+c.u+c.v+c.r+c.h)){const p=ptAt(T,Number.isFinite(c.s)?c.s:0,0);Object.assign(c,{x:p.x,z:p.z,h:p.h,u:0,v:0,r:0,steer:0,ax:0})}
   if(c.frozen>0){c.frozen-=dt;c.u=c.v=c.r=0;$('#pitBar b').style.width=(100*(1-c.frozen/4.2))+'%';
     if(c.frozen<=0){c.tire=pitUI.sel;c.wear=0;setCarTire(c.mesh,c.tire);closePit();setMsg('Released','Pit limiter on until pit exit',1.6)}}
   else{const s0=c.s,n=Math.max(1,Math.round(dt/SUB)),h=dt/n;for(let i=0;i<n;i++){stepPlayer(c,I,h);trackConstrain(c)}c.prevS=s0;
@@ -1184,9 +1263,9 @@ function devAction(k){const c=SES&&SES.player;
 
 /* =================== main loop =================== */
 let lastT=performance.now();
-function frame(now){requestAnimationFrame(frame);const dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
+function frame(now){requestAnimationFrame(frame);const dt=clamp((now-lastT)/1000,0,0.05);lastT=Math.max(lastT,now);
   if(screenName==='mini'){if(MINI.cur)MINI.cur.frame(dt);return}
-  if(screenName==='drive'&&SES){if(!SES.paused&&!devOpen)simulate(dt*(DEV.slowmo?0.35:1));updateCamera(dt);updateHUD(dt);renderer.render(scene,camera)}
+  if(screenName==='drive'&&SES){if(!SES.paused&&!devOpen&&dt>0)simulate(dt*(DEV.slowmo?0.35:1));updateCamera(dt);updateHUD(dt);renderer.render(scene,camera)}
   else if(screenName!=='lock'&&screenName!=='drive'){renderGarage(dt)}}
 /* =================== garage scene (menus) =================== */
 let gScene,gCam,gCar=null,gAngle=0.6;
@@ -1205,7 +1284,7 @@ function renderGarage(dt){if(!['menu','garage'].includes(screenName))return;gAng
 /* =================== navigation =================== */
 function go(name){screenName=name;$$('.scr').forEach(s=>s.hidden=true);$('#hud').hidden=true;$('#pause').hidden=true;$('#pitov').hidden=true;
   if(name!=='drive'){setEngine(0,0,false);const el=$('#scr-'+name);if(el)el.hidden=false}
-  $$('.cr').forEach(e=>e.textContent=S.credits.toLocaleString());$('#mCredits').textContent=S.credits.toLocaleString();
+  $$('.cr').forEach(e=>e.textContent=S.credits.toLocaleString());
   ({menu:renderMenu,tracks:renderTracks,weekend:renderWeekend,career:renderCareer,garage:renderGarageUI,ghosts:renderGhosts,settings:renderSettings,results:renderResults,games:renderGames,mp:renderMP}[name]||(()=>{}))()}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go)});
 
@@ -2054,7 +2133,7 @@ function makeBuild(opts){const ON=opts&&opts.online||null,myId=ON?ON.myId:null,T
       sc.traverse(o=>{if(o.geometry&&!Object.values(GEO).includes(o.geometry))o.geometry.dispose()})}
   }
 }
-MINIGAMES.unshift({id:'build',name:'Build Duel',tag:'Build and shoot 1v1',glyph:'#',color:'#ffb23b',desc:'Third-person build fights: throw up walls, ramps and floors instantly and out-build a bot. Includes a free build mode with flying.',
+MINIGAMES.unshift({id:'build',name:'Build Duel',tag:'Build and shoot 1v1',glyph:'#',color:'#ffb23b',desc:'Third-person build fights with walls, ramps, floors and edits. Fight friends online, duel a bot, or relax in free build.',
   fmt:v=>v+' duel'+(v===1?'':'s')+' won',bestKey:'build_w',make:makeBuild,
   ctrl:[['W A S D','Move'],['Mouse','Aim (click the game to lock the mouse)'],['Q / E / C','Pick wall, ramp or floor'],['Hold left click','Place builds (or shoot with a weapon out)'],['F','Edit: drag over squares, let go to confirm'],['1 2 3','Rifle, shotgun, sniper'],['Right click','Aim / scope'],['Esc / P','Pause'],['Keybinds','Change any key from the game menu']]});
 /* =================== shared shell for the extra 3D games =================== */
@@ -2431,7 +2510,7 @@ function makeAirsoft(opts){
   // view model
   const gun=new THREE.Group();cam.add(gun);const gM=new THREE.MeshLambertMaterial({color:0x2b2f26}),gA=new THREE.MeshLambertMaterial({color:0x6b5a3a}),tip=new THREE.MeshBasicMaterial({color:0xff7a1a});
   const gb=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.11,0.55),gM),gs=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.09,0.2),gA),gbar=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.35,8),gM),gt=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,0.04,8),tip),gmag=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.16,0.07),gM),gsc=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.24,10),gM);
-  gbar.rotation.x=gt.rotation.x=gsc.rotation.x=Math.PI/2;gs.position.z=0.3;gbar.position.z=-0.43;gt.position.z=-0.62;gmag.position.set(0,-0.12,-0.05);gsc.position.set(0,0.09,-0.05);gun.add(gb,gs,gbar,gt,gmag,gsc);gun.position.set(0.22,-0.2,-0.42);
+  gbar.rotation.x=gt.rotation.x=gsc.rotation.x=Math.PI/2;gs.position.z=0.3;gbar.position.z=-0.43;gt.position.z=-0.62;gmag.position.set(0,-0.12,-0.05);gsc.position.set(0,0.09,-0.05);gun.add(gb,gs,gbar,gt,gmag,gsc);gun.position.set(0.22,-0.2,-0.42);gun.scale.setScalar(0.8);
   const WPN=[{n:'Rifle',dmg:34,rate:0.085,mag:40,spread:0.012,speed:95,reload:1.8,auto:1},{n:'Pistol',dmg:50,rate:0.22,mag:15,spread:0.008,speed:85,reload:1.2,auto:0},{n:'Sniper',dmg:100,rate:1.2,mag:5,spread:0.001,speed:140,reload:2.2,auto:0}];
   // people
   function soldier(col,name){const g=makePerson(col,0x3a3f2a,0xe0b48a,0x222222);const goggles=new THREE.Mesh(new THREE.BoxGeometry(0.26,0.08,0.06),new THREE.MeshBasicMaterial({color:0x111111}));goggles.position.set(0,1.87,0.12);g.add(goggles);
@@ -2443,7 +2522,7 @@ function makeAirsoft(opts){
   const bbG=new THREE.SphereGeometry(0.035,6,4),bbM=new THREE.MeshBasicMaterial({color:0xffffff}),bbR=new THREE.MeshBasicMaterial({color:0xffe08a});
   function nameOf(id){if(id===myId)return'You';const o=others.get(id);return o?o.name:'?'}
   function spawnFor(id,away){const t=teamOf(id);const list=TEAMMODE?SP[t]:SP.all;let best=list[0],bd=-1;for(const s of list){let d=999;for(const o of[P,...others.values()].filter(Boolean))if(o!==away&&o.alive!==false)d=Math.min(d,Math.hypot(s[0]-o.x,s[1]-o.z));d+=Math.random()*6;if(d>bd){bd=d;best=s}}return best}
-  function newMe(){const s=spawnFor(myId,null);P={x:s[0],z:s[1],y:0,vy:0,yaw:s[1]>0?Math.PI:0,pitch:0,hp:100,w:0,am:WPN.map(w=>w.mag),cool:0,reload:0,crouch:false,alive:true,prot:2,bob:0,kick:0}}
+  function newMe(){const s=spawnFor(myId,null);P={x:s[0],z:s[1],y:0,vy:0,yaw:s[1]>0?0:Math.PI,pitch:0,hp:100,w:0,am:WPN.map(w=>w.mag),cool:0,reload:0,crouch:false,alive:true,prot:2,bob:0,kick:0}}
   function addOther(id,name,col,bot){const o={id,name,bot,m:soldier(col,name),x:0,y:0,z:0,yaw:0,alive:!!bot,walk:0,hp:100,t:teamOf(id)};others.set(id,o);if(bot){const s=spawnFor(id,null);Object.assign(o,{x:s[0],z:s[1],cool:rnd(1,2),burst:0,wp:null,strafe:1,stT:1,am:30,reload:0,react:0})}return o}
   function reset(){for(const o of others.values())sc.remove(o.m);others.clear();for(const b of bbs)sc.remove(b.m);bbs=[];KILLS={};TK={r:0,b:0};feed=[];
     if(ON){for(const p of ON.players)if(p.id!==myId)addOther(p.id,p.name,teamCol(teamOf(p.id))||new THREE.Color(p.primary).getHex(),false);KILLS[myId]=0;for(const p of ON.players)KILLS[p.id]=0}
@@ -2525,7 +2604,7 @@ function makeAirsoft(opts){
     dispose(){removeEventListener('mousemove',onMove);removeEventListener('mousedown',onDown);removeEventListener('mouseup',onUp);removeEventListener('contextmenu',onCtx);document.removeEventListener('pointerlockchange',onLock);removeEventListener('wheel',onWheel);sc.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
   }
 }
-MINIGAMES.splice(1,0,{id:'air',name:'Airsoft Arena',tag:'First-person PvP',glyph:'A',color:'#6b8a3a',desc:'Airsoft on a wooded field. Practice against bots here, or play friends free-for-all or red vs blue from the Multiplayer lobby.',fmt:v=>v+' win'+(v===1?'':'s'),make:makeAirsoft,
+MINIGAMES.splice(1,0,{id:'air',name:'Airsoft Arena',tag:'First-person PvP',glyph:'A',color:'#6b8a3a',desc:'Airsoft on a wooded field with bunkers, pallets and tyre stacks. Play friends free-for-all or red vs blue, or practise against bots.',fmt:v=>v+' win'+(v===1?'':'s'),make:makeAirsoft,
   ctrl:[['W A S D','Move'],['Mouse','Look (click the game to lock the mouse)'],['Left click / F','Shoot'],['Right click','Aim down sights / scope'],['1 2 3 / wheel','Rifle, pistol, sniper'],['R','Reload'],['C','Crouch'],['Space','Jump'],['Shift','Sprint'],['Tab','Scoreboard'],['Esc / P','Pause']]});
 /* =================== MULTIPLAYER: room codes, peer-to-peer via PeerJS =================== */
 const NET={peer:null,host:false,conn:null,conns:new Map(),players:[],myId:null,code:null,status:'',settings:{game:'race',track:'bahrain',laps:5,weather:'dynamic',blimit:10,amode:'ffa',alimit:20},states:{},mstates:{},inRace:false,tire:'medium',race:null};
@@ -2634,6 +2713,54 @@ function renderMP(){const el=$('#mpBody');if(!el)return;
   if(NET.host){if($('#mpTrack'))$('#mpTrack').onchange=e=>{NET.settings.track=e.target.value;bcast(lobbyMsg())};$$('[data-ms]').forEach(b=>b.onclick=()=>{const k=b.dataset.ms;NET.settings[k]=['laps','blimit','alimit'].includes(k)?+b.dataset.mv:b.dataset.mv;bcast(lobbyMsg());renderMP()});$('#mpStart').onclick=hostStart}}
 $('#mpBack').onclick=()=>{leaveRoom(true);go('menu')};
 addEventListener('beforeunload',()=>{try{NET.peer&&NET.peer.destroy()}catch(x){}});
+/* =================== site layout: navigation, home, racing hub, games library =================== */
+const GCAT={build:['online','shooter'],air:['online','shooter'],fps:['shooter'],sky:['shooter'],zom:['shooter'],tank:['arcade'],run:['arcade'],stk:['arcade'],pen:['sports'],hoop:['sports'],bowl:['sports'],hock:['sports']};
+const CATS=[['all','All'],['online','Online'],['shooter','Shooters'],['sports','Sports'],['arcade','Arcade'],['racing','Racing']];
+const POLY={id:'poly',name:'PolyTrack',tag:'Online racing',glyph:'P',color:'#2fb3a6',desc:'Low-poly time-trial racing with a track editor, on your own PolyTrack page.',href:'https://polytrack.jacjones.net'};
+const NAVTAB={menu:'menu',racing:'racing',tracks:'racing',career:'racing',ghosts:'racing',games:'games',mp:'mp',garage:'garage',settings:'settings'};
+let gFilter='all';try{gFilter=localStorage.getItem('n24_gfilter')||'all'}catch(e){}
+
+function gameArt(cv,g){const r=cv.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),w=Math.max(40,r.width||280),h=Math.max(30,r.height||158);cv.width=w*dpr;cv.height=h*dpr;const x=cv.getContext('2d');x.scale(dpr,dpr);
+  const c=new THREE.Color(g.color),dark=c.clone().multiplyScalar(0.28),mid=c.clone().multiplyScalar(0.75);const gr=x.createLinearGradient(0,0,w,h);gr.addColorStop(0,'#'+mid.getHexString());gr.addColorStop(1,'#'+dark.getHexString());x.fillStyle=gr;x.fillRect(0,0,w,h);
+  let seed=0;for(const ch of g.id)seed=(seed*31+ch.charCodeAt(0))>>>0;const rr=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+  x.save();x.globalAlpha=0.09;x.fillStyle='#fff';for(let i=0;i<7;i++){const o=rr()*w*1.4-w*0.2,s=6+rr()*26;x.beginPath();x.moveTo(o,h);x.lineTo(o+s,h);x.lineTo(o+s+h*0.6,0);x.lineTo(o+h*0.6,0);x.fill()}x.restore();
+  x.save();x.globalAlpha=0.18;x.strokeStyle='#fff';x.lineWidth=1;for(let i=0;i<5;i++){x.beginPath();x.arc(w*(0.6+rr()*0.5),h*(rr()),10+rr()*h*0.6,0,7);x.stroke()}x.restore();
+  x.save();x.font=`italic 800 ${h*1.05}px "Saira Condensed","Arial Narrow",sans-serif`;x.textAlign='right';x.textBaseline='alphabetic';x.fillStyle='rgba(0,0,0,.28)';x.fillText(g.glyph,w*0.97,h*0.92);x.fillStyle='rgba(255,255,255,.14)';x.fillText(g.glyph,w*0.97-3,h*0.92-3);x.restore();
+  const vg=x.createLinearGradient(0,h*0.45,0,h);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=vg;x.fillRect(0,0,w,h)}
+function bestText(g){if(g.href)return'Opens in a new page';const b=(S.mini||{})[g.bestKey||g.id];return b==null?'Not played yet':g.fmt(b)}
+
+renderMenu=function(){const C=S.career;$('#hSeason').textContent=!C?'New season ready':C.done?'Season '+C.season+' complete':'Season '+C.season+' · Round '+(C.round+1)+' of '+TRACKS.length;
+  $('#hCareer').textContent=!C?'Start career':C.done?'Start season '+(C.season+1):'Continue career · '+TRACKS[C.round].gp.replace(' Grand Prix','');
+  let pos='—';if(C){const ids=['p',...AI_DRIVERS.map(d=>'a'+d[1])];const rows=ids.map(id=>[id,C.points[id]||0]).sort((a,b)=>b[1]-a[1]);pos='P'+(rows.findIndex(r=>r[0]==='p')+1)}
+  const played=Object.keys(S.pb||{}).length;$('#hStats').innerHTML=[['Credits',S.credits.toLocaleString()],['Race wins',S.wins],['Championship',pos],['Circuits lapped',played+'/'+TRACKS.length]].map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');
+  $('#hCareer').onclick=()=>go('career');
+  const feat=['build','air','zom','fps'].map(id=>MINIGAMES.find(g=>g.id===id)).filter(Boolean);
+  $('#featRow').innerHTML=feat.map(g=>`<button class="ftile" data-play="${g.id}"><canvas></canvas><span class="ft-t">${esc(g.name)}<span class="ft-s">${esc(g.tag)}</span></span></button>`).join('')+`<button class="ftile all" data-go="games"><span>All ${MINIGAMES.length+1} games</span></button>`;
+  requestAnimationFrame(()=>$$('#featRow .ftile[data-play]').forEach(b=>{gameArt(b.querySelector('canvas'),MINIGAMES.find(g=>g.id===b.dataset.play))}));
+  $$('#featRow [data-play]').forEach(b=>b.onclick=()=>startMini(b.dataset.play))};
+
+function renderRacing(){const C=S.career;const cards=[
+    ['career',C&&!C.done?TRACKS[C.round].id:'silverstone','Career',C?(C.done?'Season '+C.season+' complete':'Round '+(C.round+1)+' of '+TRACKS.length+' · '+TRACKS[C.round].gp):'Six-round championship','Practice, qualifying and the Grand Prix at every round. Win credits and points.'],
+    ['tracks','monza','Quick race','Any circuit','Pick a circuit and run a full race weekend with your own rules.'],
+    ['mp','spa','Online race','Up to 10 drivers','Create a room, share the code and race your friends live.'],
+    ['ghosts','monaco','Ghost replays',((S.replays||[]).length+Object.keys(S.pb||{}).length)+' saved laps','Race your best laps, watch them back and compare two laps.']];
+  $('#rHub').innerHTML=cards.map(([go_,tr,t,k,d])=>`<button class="rcard" data-go="${go_}" data-tr="${tr}"><canvas></canvas><div class="rc-b"><span class="rc-k">${esc(k)}</span><div class="disp">${esc(t)}</div><p>${esc(d)}</p></div></button>`).join('');
+  requestAnimationFrame(()=>$$('#rHub .rcard').forEach(b=>drawMap(b.querySelector('canvas'),b.dataset.tr,'#eef1f5',3)));
+  $('#rRecords').innerHTML='<tr><th>Circuit</th><th>Length</th><th>Personal best</th><th>Rain risk</th><th></th></tr>'+TRACKS.map(t=>{const pb=S.pb[t.id];return`<tr><td>${esc(t.gp)}</td><td class="num">${(trackLen(t.id)/1000).toFixed(2)} km</td><td class="num ${pb?'t-purple':'muted'}">${pb?fmtT(pb.time):'No time'}</td><td>${t.rain<0.15?'Low':t.rain<0.4?'Medium':'High'}</td><td><button class="btn small" data-qr="${t.id}">Race</button></td></tr>`}).join('');
+  $$('[data-qr]').forEach(b=>b.onclick=()=>newWeekend(b.dataset.qr,'quick',null))}
+
+renderGames=function(){const list=MINIGAMES.concat([POLY]).filter(g=>gFilter==='all'||(g.href?gFilter==='racing'||gFilter==='online':(GCAT[g.id]||[]).includes(gFilter)));
+  $('#gChips').innerHTML=CATS.map(([k,l])=>`<button data-cat="${k}" class="${k===gFilter?'on':''}">${l}</button>`).join('');
+  $$('#gChips [data-cat]').forEach(b=>b.onclick=()=>{gFilter=b.dataset.cat;try{localStorage.setItem('n24_gfilter',gFilter)}catch(e){}renderGames()});
+  $('#gamesGrid').innerHTML=list.map(g=>{const cats=g.href?['online']:(GCAT[g.id]||[]);const badges=(cats.includes('online')?'<span class="on">Online</span>':'')+`<span>${esc(g.tag)}</span>`;const inner=`<div class="gc-art"><canvas data-art="${g.id}"></canvas><div class="gbadges">${badges}</div></div>
+    <div class="gc-b"><div class="disp">${esc(g.name)}</div><p>${esc(g.desc)}</p><div class="kv"><span>${g.href?'Link':'Best'}</span><span class="num">${esc(bestText(g))}</span></div></div>`;
+    return g.href?`<a class="gcard" href="${g.href}">${inner}</a>`:`<button class="gcard" data-play="${g.id}">${inner}</button>`}).join('')||'<p class="muted">No games in this group yet.</p>';
+  requestAnimationFrame(()=>$$('#gamesGrid canvas[data-art]').forEach(cv=>{const id=cv.dataset.art;gameArt(cv,id==='poly'?POLY:MINIGAMES.find(g=>g.id===id))}));
+  $$('#gamesGrid [data-play]').forEach(b=>b.onclick=()=>startMini(b.dataset.play))};
+
+{const _go=go;go=function(name){_go(name);const tab=NAVTAB[name];$('#topnav').hidden=!tab;$('#ui').classList.toggle('nav-on',!!tab);$$('#topnav [data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  if(name==='racing')renderRacing();const on=$('#topnav [data-tab].on');if(on&&on.scrollIntoView)try{on.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}}
+addEventListener('resize',()=>{if(screenName==='games')$$('#gamesGrid canvas[data-art]').forEach(cv=>{const id=cv.dataset.art;gameArt(cv,id==='poly'?POLY:MINIGAMES.find(g=>g.id===id))})});
 }
 (function(){
   var srcs=['https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js','https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js','https://unpkg.com/three@0.128.0/build/three.min.js'];
