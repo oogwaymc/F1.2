@@ -441,7 +441,7 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
           <div class="card"><div class="row"><h3>Calendar</h3><span class="spacer"></span><button class="btn primary small" id="cNext">Next round</button></div><div class="tscroll"><table id="cCal" style="margin-top:8px"></table></div></div>
           <div class="card"><h3>Finishing positions</h3><canvas class="chart" id="cTrend" style="margin-top:8px"></canvas></div>
         </div>
-        <div class="card"><h3>Drivers' standings</h3><div class="tscroll"><table id="cStand" style="margin-top:8px"></table></div><div class="row" style="margin-top:12px"><span class="muted" style="font-size:13px" id="cWins"></span><span class="spacer"></span><button class="btn small" id="cReset">New career</button></div></div>
+        <div class="card"><h3>Drivers' standings</h3><div class="tscroll"><table id="cStand" style="margin-top:8px"></table></div><div class="row" style="margin-top:12px"><span class="muted" style="font-size:13px" id="cWins"></span><span class="spacer"></span><select id="cLen" class="btn small" title="Season length for the next new season or career" style="margin-right:8px"><option value="full">Full season · 24</option><option value="short">Short season · 8</option><option value="classic">Classic · 6</option></select><button class="btn small" id="cReset">New career</button></div></div>
       </div>
     </section>
 
@@ -599,6 +599,9 @@ const TRACKS=[
   {id:'vegas',name:'Las Vegas Strip Circuit',gp:'Las Vegas Grand Prix',W:14,run:4,rain:0.02,scen:'city'},
   {id:'qatar',name:'Lusail International Circuit',gp:'Qatar Grand Prix',W:15,run:22,rain:0.02,scen:'desert'},
   {id:'abudhabi',name:'Yas Marina Circuit',gp:'Abu Dhabi Grand Prix',W:15,run:18,rain:0.02,scen:'desert'}];
+const SEASONS={full:{n:'Full season · 24 races',ids:null},short:{n:'Short season · 8 races',ids:['australia','bahrain','monaco','silverstone','spa','japan','monza','brazil']},classic:{n:'Classic · 6 races',ids:['bahrain','monaco','redbullring','silverstone','spa','monza']}};
+function calOf(C){return((C&&C.cal&&C.cal.length)?C.cal:TRACKS.map(t=>t.id)).map(id=>TRACKS.find(t=>t.id===id)).filter(Boolean)}
+function newCareer(season,len){len=SEASONS[len]?len:'full';return{season,round:0,points:{},results:[],done:false,len,cal:(SEASONS[len].ids||TRACKS.map(t=>t.id)).slice()}}
 const SCEN={
   desert:{ground:0xc4a170,sky:0x9fc6e6,trees:0,col:0x8a7a4a,dunes:1},
   city:{ground:0x6f7a62,sky:0x9cc4e8,trees:0x2f5a2a,build:1},
@@ -637,6 +640,7 @@ function loadSave(){let j=null;try{j=JSON.parse(localStorage.getItem('n24gp_save
 function save(){try{localStorage.setItem('n24gp_save',JSON.stringify(S))}catch(e){
   if(S.replays.length>2){S.replays.splice(0,Math.ceil(S.replays.length/3));try{localStorage.setItem('n24gp_save',JSON.stringify(S))}catch(e2){}toast('Storage full: removed oldest replays')}}}
 loadSave();
+if(S.career&&!S.career.cal){S.career.cal=['bahrain','monaco','redbullring','silverstone','spa','monza'];S.career.len='classic'}
 
 function carParams(up){up=up||S.upgrades;return{mass:800-up.chassis*8,power:700000*(1+0.04*up.engine),cda:1.5*(1+0.012*up.aero),cla:4.5*(1+0.07*up.aero),
   brake:1+0.08*up.brakes,grip:1+0.025*up.suspension,ers:1+0.15*up.ers}}
@@ -1333,7 +1337,7 @@ function drawMap(cv,id,col='#eef1f5',lw=3){const dpr=Math.min(2,devicePixelRatio
 function trackLen(id){let d=TRACK_DATA[id],n=d.length/2,L=0;for(let i=0;i<n;i++){const j=(i+1)%n;L+=Math.hypot(d[2*j]-d[2*i],d[2*j+1]-d[2*i+1])}return L}
 
 /* =================== menu / tracks =================== */
-function renderMenu(){const c=S.career;$('#mCareerSub').textContent=!c?'24-round championship':c.done?'Season '+c.season+' complete':'Season '+c.season+' · Round '+(c.round+1)+' of '+TRACKS.length}
+function renderMenu(){const c=S.career;$('#mCareerSub').textContent=!c?'Championship · 24, 8 or 6 races':c.done?'Season '+c.season+' complete':'Season '+c.season+' · Round '+(c.round+1)+' of '+calOf(c).length}
 function renderTracks(){$('#trackGrid').innerHTML=TRACKS.map(t=>{const pb=S.pb[t.id];return`<button class="tcard" data-t="${t.id}"><div class="eyebrow">${esc(t.gp)}</div><div class="disp">${esc(t.name)}</div><canvas></canvas>
   <div class="kv"><span>Length</span><span class="num">${(trackLen(t.id)/1000).toFixed(2)} km</span></div><div class="kv"><span>Personal best</span><span class="num">${pb?fmtT(pb.time):'No time set'}</span></div><div class="kv"><span>Rain risk</span><span>${t.rain<0.15?'Low':t.rain<0.4?'Medium':'High'}</span></div></button>`}).join('');
   $$('#trackGrid .tcard').forEach(b=>{drawMap(b.querySelector('canvas'),b.dataset.t);b.onclick=()=>newWeekend(b.dataset.t,'quick',null)})}
@@ -1344,7 +1348,7 @@ function newWeekend(id,mode,round){if(mode==='career')ensureCareer();const def=T
   AI_DRIVERS.forEach(d=>WK.form[d[1]]=rnd(-0.004,0.004));WK.tire=bestTireFor(WK.wx.quali.sched[0].i>0?Math.min(1,WK.wx.quali.sched[0].i*0.9+0.1):0);go('weekend')}
 function nextSessionWx(){return WK.qualiRes||WK.grid?WK.wx.race:WK.wx.quali}
 function renderWeekend(){const def=TRACKS.find(t=>t.id===WK.id);
-  $('#wkEyebrow').textContent=WK.mode==='career'?'Season '+S.career.season+' · Round '+(WK.round+1)+' of '+TRACKS.length:'Quick race weekend';$('#wkTitle').textContent=def.gp;
+  $('#wkEyebrow').textContent=WK.mode==='career'?'Season '+S.career.season+' · Round '+(WK.round+1)+' of '+calOf(S.career).length:'Quick race weekend';$('#wkTitle').textContent=def.gp;
   $('#raceName').textContent=def.gp.replace(' Grand Prix',' GP');$('#rInfo').textContent=S.settings.laps+' laps · '+(trackLen(WK.id)*S.settings.laps/1000).toFixed(1)+' km · '+S.settings.field+' rivals';
   $('#qBadge').hidden=!WK.qualiRes;$('#goQuali').hidden=!!WK.grid;$('#skipQuali').hidden=!!WK.grid;
   $('#qInfo').textContent=WK.qualiRes?'You qualified P'+(WK.grid.indexOf('p')+1)+'.':WK.grid?'Skipped. You start from the back.':'Three timed laps decide the grid.';
@@ -1398,7 +1402,7 @@ function finishSession(reason){
     let txt=me.dnf?'Retired':('Finished P'+pos);if(res.fl&&!me.dnf){cr+=150;txt+=' · Fastest lap +150'}const gained=grid-pos;if(gained>0&&!me.dnf){cr+=gained*20;txt+=' · '+gained+' places gained +'+gained*20}
     S.credits+=cr;if(pos===1&&!me.dnf){S.wins++;txt+=' · Race win! ('+S.wins+' total)'}res.reward={credits:cr,text:txt,pts:me.pts};
     S.history.push({track:def.id,pos:me.dnf?null:pos,grid,best:me.best,date:Date.now(),mode});if(S.history.length>60)S.history.shift();
-    if(mode==='career'){const C=S.career;rows.forEach(r=>C.points[r.id]=(C.points[r.id]||0)+r.pts);C.results[WK.round]={pos:me.dnf?null:pos,grid,pts:me.pts,best:me.best};C.round++;if(C.round>=TRACKS.length)C.done=true}
+    if(mode==='career'){const C=S.career;rows.forEach(r=>C.points[r.id]=(C.points[r.id]||0)+r.pts);C.results[WK.round]={pos:me.dnf?null:pos,grid,pts:me.pts,best:me.best};C.round++;if(C.round>=calOf(C).length)C.done=true}
     WK.raceDone=true;if(mode==='mp')mpRaceOver();
   }
   save();RES=res;clearCars();
@@ -1460,9 +1464,9 @@ function stackBar(cv,parts){const{x,w,h}=chartCtx(cv);let xx=0;const bh=22;parts
   x.textAlign='left';parts.forEach(([n,f,c],i)=>{const lx=i*(w/3);x.fillStyle=c;x.fillRect(lx,48,10,10);x.fillStyle='#eef1f5';x.fillText(n+' '+Math.round(f*100)+'%',lx+16,53)})}
 
 /* =================== career =================== */
-function ensureCareer(){if(!S.career){S.career={season:1,round:0,points:{},results:[],done:false};save()}}
-function renderCareer(){ensureCareer();const C=S.career;$('#cSeason').textContent='Season '+C.season+(C.done?' · complete':' · Round '+(C.round+1)+' of '+TRACKS.length);
-  $('#cCal').innerHTML='<tr><th>Rd</th><th>Grand Prix</th><th>Grid</th><th>Result</th><th>Pts</th></tr>'+TRACKS.map((t,i)=>{const r=C.results[i];const st=r?(r.pos?'P'+r.pos:'DNF'):i===C.round&&!C.done?'<span class="t-purple">Next</span>':'<span class="muted">—</span>';
+function ensureCareer(){if(!S.career){S.career=newCareer(1,($('#cLen')&&$('#cLen').value)||'full');save()}}
+function renderCareer(){ensureCareer();const C=S.career;$('#cSeason').textContent='Season '+C.season+(C.done?' · complete':' · Round '+(C.round+1)+' of '+calOf(C).length)+' · '+(SEASONS[C.len]||SEASONS.full).n;const ls=$('#cLen');if(ls)ls.value=C.len||'full';
+  $('#cCal').innerHTML='<tr><th>Rd</th><th>Grand Prix</th><th>Grid</th><th>Result</th><th>Pts</th></tr>'+calOf(C).map((t,i)=>{const r=C.results[i];const st=r?(r.pos?'P'+r.pos:'DNF'):i===C.round&&!C.done?'<span class="t-purple">Next</span>':'<span class="muted">—</span>';
     return`<tr class="${i===C.round&&!C.done?'me':''}"><td>${i+1}</td><td>${esc(t.gp)}</td><td>${r?'P'+r.grid:''}</td><td>${st}</td><td>${r?r.pts:''}</td></tr>`}).join('');
   const ids=['p',...AI_DRIVERS.map(d=>'a'+d[1])],rows=ids.map(id=>({id,...dInfo(id),pts:C.points[id]||0})).sort((a,b)=>b.pts-a.pts);
   $('#cStand').innerHTML='<tr><th>Pos</th><th>Driver</th><th>Team</th><th>Pts</th></tr>'+rows.map((r,i)=>`<tr class="${r.id==='p'?'me':''}"><td>${i+1}</td><td><span class="teamdot" style="background:${r.color}"></span>${esc(r.name)} <span class="muted">#${r.num}</span></td><td class="muted">${esc(r.team)}</td><td class="num">${r.pts}</td></tr>`).join('');
@@ -1471,7 +1475,8 @@ function renderCareer(){ensureCareer();const C=S.career;$('#cSeason').textConten
   $('#cNext').textContent=C.done?'Start season '+(C.season+1):'Go to round '+(C.round+1);
   const hist=S.history.filter(hh=>hh.pos).slice(-20);requestAnimationFrame(()=>lineChart($('#cTrend'),[{pts:hist.map((hh,i)=>[i+1,hh.pos]),color:'#b14bff',w:2.5,dots:1}],{invertY:1,yMin:1,yMax:16,intY:1,yFmt:v=>'P'+v,xFmt:v=>'#'+v}));
 }
-$('#cNext').onclick=()=>{const C=S.career;if(C.done){S.career={season:C.season+1,round:0,points:{},results:[],done:false};save();renderCareer();return}newWeekend(TRACKS[C.round].id,'career',C.round)};
+$('#cNext').onclick=()=>{const C=S.career;if(C.done){S.career=newCareer(C.season+1,($('#cLen')&&$('#cLen').value)||C.len);save();renderCareer();return}newWeekend(calOf(C)[C.round].id,'career',C.round)};
+$('#cLen').onchange=()=>{const C=S.career;if(C&&C.round===0&&!C.results.length){S.career=newCareer(C.season,$('#cLen').value);save();renderCareer();toast((SEASONS[S.career.len]).n)}else toast('Applies to your next season')};
 $('#cReset').onclick=e=>{const b=e.currentTarget;if(b.dataset.arm){S.career=null;ensureCareer();delete b.dataset.arm;b.textContent='New career';renderCareer()}else{b.dataset.arm=1;b.textContent='Click again to reset';setTimeout(()=>{delete b.dataset.arm;b.textContent='New career'},3000)}};
 
 /* =================== garage UI =================== */
@@ -2767,8 +2772,8 @@ function gameArt(cv,g){const r=cv.getBoundingClientRect(),dpr=Math.min(2,deviceP
   const vg=x.createLinearGradient(0,h*0.45,0,h);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=vg;x.fillRect(0,0,w,h)}
 function bestText(g){if(g.href)return'Opens in a new page';const b=(S.mini||{})[g.bestKey||g.id];return b==null?'Not played yet':g.fmt(b)}
 
-renderMenu=function(){const C=S.career;$('#hSeason').textContent=!C?'New season ready':C.done?'Season '+C.season+' complete':'Season '+C.season+' · Round '+(C.round+1)+' of '+TRACKS.length;
-  $('#hCareer').textContent=!C?'Start career':C.done?'Start season '+(C.season+1):'Continue career · '+TRACKS[C.round].gp.replace(' Grand Prix','');
+renderMenu=function(){const C=S.career;$('#hSeason').textContent=!C?'New season ready':C.done?'Season '+C.season+' complete':'Season '+C.season+' · Round '+(C.round+1)+' of '+calOf(C).length;
+  $('#hCareer').textContent=!C?'Start career':C.done?'Start season '+(C.season+1):'Continue career · '+calOf(C)[C.round].gp.replace(' Grand Prix','');
   let pos='—';if(C){const ids=['p',...AI_DRIVERS.map(d=>'a'+d[1])];const rows=ids.map(id=>[id,C.points[id]||0]).sort((a,b)=>b[1]-a[1]);pos='P'+(rows.findIndex(r=>r[0]==='p')+1)}
   const played=Object.keys(S.pb||{}).length;$('#hStats').innerHTML=[['Credits',S.credits.toLocaleString()],['Race wins',S.wins],['Championship',pos],['Circuits lapped',played+'/'+TRACKS.length]].map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');
   $('#hCareer').onclick=()=>go('career');
@@ -2778,7 +2783,7 @@ renderMenu=function(){const C=S.career;$('#hSeason').textContent=!C?'New season 
   $$('#featRow [data-play]').forEach(b=>b.onclick=()=>startMini(b.dataset.play))};
 
 function renderRacing(){const C=S.career;const cards=[
-    ['career',C&&!C.done?TRACKS[C.round].id:'silverstone','Career',C?(C.done?'Season '+C.season+' complete':'Round '+(C.round+1)+' of '+TRACKS.length+' · '+TRACKS[C.round].gp):'24-round championship','Practice, qualifying and the Grand Prix at every round. Win credits and points.'],
+    ['career',C&&!C.done?calOf(C)[C.round].id:'silverstone','Career',C?(C.done?'Season '+C.season+' complete':'Round '+(C.round+1)+' of '+calOf(C).length+' · '+calOf(C)[C.round].gp):'24, 8 or 6 race seasons','Practice, qualifying and the Grand Prix at every round. Win credits and points.'],
     ['tracks','monza','Quick race','Any circuit','Pick a circuit and run a full race weekend with your own rules.'],
     ['mp','spa','Online race','Up to 10 drivers','Create a room, share the code and race your friends live.'],
     ['ghosts','monaco','Ghost replays',((S.replays||[]).length+Object.keys(S.pb||{}).length)+' saved laps','Race your best laps, watch them back and compare two laps.']];
