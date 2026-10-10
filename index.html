@@ -863,6 +863,7 @@ function save(){try{localStorage.setItem('n24gp_save',JSON.stringify(S))}catch(e
   if(S.replays.length>2){S.replays.splice(0,Math.ceil(S.replays.length/3));try{localStorage.setItem('n24gp_save',JSON.stringify(S))}catch(e2){}toast('Storage full: removed oldest replays')}}}
 loadSave();
 if(S.career&&!S.career.cal){S.career.cal=['bahrain','monaco','redbullring','silverstone','spa','monza'];S.career.len='classic'}
+if(S.career&&S.career.cal&&S.career.round>=S.career.cal.length)S.career.done=true;
 
 function carParams(up){up=up||S.upgrades;return{mass:800-up.chassis*8,power:700000*(1+0.04*up.engine),cda:1.5*(1+0.012*up.aero),cla:4.5*(1+0.07*up.aero),
   brake:1+0.08*up.brakes,grip:1+0.025*up.suspension,ers:1+0.15*up.ers}}
