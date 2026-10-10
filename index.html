@@ -1647,10 +1647,10 @@ function makeFPS(){
     miniPanel(nb?'New best!':'You were overrun',`Wave ${wave} · ${kills} drones destroyed`,`<div class="stats" style="margin:6px 0">${[['Score',score.toLocaleString()],['Accuracy',acc+'%'],['Headshots',heads],['Best',(S.mini.fps||0).toLocaleString()]].map(([a,b])=>`<div class="stat"><span>${a}</span><b>${b}</b></div>`).join('')}</div>`,
       [['Play again',()=>{hideMiniPanel();reset();state='play';lockPointer()}],['Exit to games',exitMini]])}
   function pause(){if(state!=='play')return;state='paused';miniPanel('Paused','',ctrlHTML(MINI.def),[['Resume',()=>{hideMiniPanel();state='play';lockPointer()}],['Restart',()=>{hideMiniPanel();reset();state='play';lockPointer()}],['Exit to games',exitMini]])}
-  const onMove=e=>{if(state!=='play'||document.pointerLockElement!==$('#gl'))return;P.yaw-=e.movementX*0.0023;P.pitch=clamp(P.pitch-e.movementY*0.0023,-1.45,1.45)};
-  const onDown=e=>{if(state!=='play')return;if(document.pointerLockElement!==$('#gl')){lockPointer();return}if(e.button===0){mouseDown=true;firedThisPress=false}if(e.button===2)doReload()};
+  const onMove=e=>{if(state!=='play'||!(TOUCH.on||document.pointerLockElement===$('#gl')))return;P.yaw-=e.movementX*0.0023;P.pitch=clamp(P.pitch-e.movementY*0.0023,-1.45,1.45)};
+  const onDown=e=>{if(state!=='play')return;if(!(TOUCH.on||document.pointerLockElement===$('#gl'))){lockPointer();return}if(e.button===0){mouseDown=true;firedThisPress=false}if(e.button===2)doReload()};
   const onUp=e=>{if(e.button===0)mouseDown=false};const onCtx=e=>{if(screenName==='mini')e.preventDefault()};
-  const onLock=()=>{if(state==='play'&&document.pointerLockElement!==$('#gl'))pause()};
+  const onLock=()=>{if(state==='play'&&!(TOUCH.on||document.pointerLockElement===$('#gl')))pause()};
   const onWheel=e=>{if(state==='play')setWeapon((P.w+(e.deltaY>0?1:2))%3)};
   addEventListener('mousemove',onMove);addEventListener('mousedown',onDown);addEventListener('mouseup',onUp);addEventListener('contextmenu',onCtx);document.addEventListener('pointerlockchange',onLock);addEventListener('wheel',onWheel);
   reset();
@@ -2121,11 +2121,11 @@ function makeBuild(opts){const ON=opts&&opts.online||null,myId=ON?ON.myId:null,T
       [['Play online with friends',()=>goOnline('build')],['1v1 vs bot',()=>{mode='duel';hideMiniPanel();reset();state='play';banner('Fight!','First to 5');lockPointer()}],['Free build',()=>{mode='free';hideMiniPanel();reset();state='play';banner('Free build','Unlimited materials · '+keyName(KB.fly)+' to fly · '+keyName(KB.del)+' deletes');lockPointer()}],['Keybinds',()=>bindsPanel(intro)],['Back',exitMini]]);
     $$('[data-diff]').forEach(b=>b.onclick=e=>{e.stopPropagation();diff=b.dataset.diff;$$('[data-diff]').forEach(x=>x.classList.toggle('on',x===b))})}
   function pause(){if(state!=='play')return;state='paused';saveBuild();if(ON){miniPanel('Paused','The match keeps going while you are in this menu.',ctrlNow(),[['Resume',()=>{hideMiniPanel();state='play';lockPointer()}],['Keybinds',()=>bindsPanel(()=>{state='play';pause()})],['Leave match',exitMini]]);return}miniPanel('Paused','',ctrlNow(),[['Resume',()=>{hideMiniPanel();state='play';lockPointer()}],['Keybinds',()=>bindsPanel(()=>{state='play';pause()})],...(mode==='free'?[['Clear the whole build',()=>{clearAll();dirty=true;saveBuild();hideMiniPanel();state='play';lockPointer()}]]:[['Restart duel',()=>{hideMiniPanel();reset();state='play';lockPointer()}]]),['Change mode',()=>{reset();intro()}],['Exit to games',()=>{saveBuild();exitMini()}]])}
-  const onMove=e=>{if(state!=='play'||document.pointerLockElement!==$('#gl'))return;const s=aimDown?0.0012:0.0023;P.yaw-=e.movementX*s;P.pitch=clamp(P.pitch-e.movementY*s,-1.4,1.4)};
-  const onDown=e=>{if(capture&&[1,3,4].includes(e.button)){e.preventDefault();assign('Mouse'+e.button);return}if(state!=='play')return;if(document.pointerLockElement!==$('#gl')){lockPointer();return}K['Mouse'+e.button]=true;
+  const onMove=e=>{if(state!=='play'||!(TOUCH.on||document.pointerLockElement===$('#gl')))return;const s=aimDown?0.0012:0.0023;P.yaw-=e.movementX*s;P.pitch=clamp(P.pitch-e.movementY*s,-1.4,1.4)};
+  const onDown=e=>{if(capture&&[1,3,4].includes(e.button)){e.preventDefault();assign('Mouse'+e.button);return}if(state!=='play')return;if(!(TOUCH.on||document.pointerLockElement===$('#gl'))){lockPointer();return}K['Mouse'+e.button]=true;
     if(e.button===0){if(edit){edit.drag=true;editPaint()}else{mouseDown=true;fired=false;buildT=0}}if(e.button===2){if(edit)resetEdit();else if(!buildSel)aimDown=true}if(e.button!==0&&e.button!==2){e.preventDefault();action('Mouse'+e.button,false)}};
   const onUp=e=>{K['Mouse'+e.button]=false;if(e.button===0){mouseDown=false;if(edit&&edit.drag)endEdit(true)}if(e.button===2)aimDown=false};const onCtx=e=>{if(screenName==='mini')e.preventDefault()};
-  const onLock=()=>{if(state==='play'&&document.pointerLockElement!==$('#gl'))pause()};const onWheel=e=>{if(state==='play'&&!edit){buildSel=null;P.w=(P.w+(e.deltaY>0?1:2))%3;P.reload=0}};
+  const onLock=()=>{if(state==='play'&&!(TOUCH.on||document.pointerLockElement===$('#gl')))pause()};const onWheel=e=>{if(state==='play'&&!edit){buildSel=null;P.w=(P.w+(e.deltaY>0?1:2))%3;P.reload=0}};
   addEventListener('mousemove',onMove);addEventListener('mousedown',onDown);addEventListener('mouseup',onUp);addEventListener('contextmenu',onCtx);document.addEventListener('pointerlockchange',onLock);addEventListener('wheel',onWheel);
   mode=ON?'online':'duel';reset();
   return{
@@ -2591,10 +2591,10 @@ function makeAirsoft(opts){
     const b=$('#aBoard');b.hidden=!K.Tab;if(K.Tab)b.innerHTML='<table>'+Object.keys(KILLS).sort((a,c)=>KILLS[c]-KILLS[a]).map(k=>`<tr class="${k===myId?'me':''}"><td>${esc(nameOf(k))}</td><td>${TEAMMODE?(teamOf(k)==='r'?'Red':'Blue'):''}</td><td class="num">${KILLS[k]}</td></tr>`).join('')+'</table>'}
   function pause(){if(state!=='play')return;state='paused';try{document.exitPointerLock()}catch(e){}miniPanel('Paused',ON?'The match keeps going while you are in this menu.':'',ctrlHTML(MINI.def),ON?[['Resume',()=>{hideMiniPanel();state='play';lockPointer()}],['Leave match',exitMini]]:[['Resume',()=>{hideMiniPanel();state='play';lockPointer()}],['Restart',()=>{hideMiniPanel();reset();state='play';lockPointer()}],['Exit to games',exitMini]])}
   const _d=new THREE.Vector3();
-  const onMove=e=>{if(state!=='play'||document.pointerLockElement!==$('#gl'))return;const s=aimDown?(P.w===2?0.0006:0.0014):0.0023;P.yaw-=e.movementX*s;P.pitch=clamp(P.pitch-e.movementY*s,-1.45,1.45)};
-  const onDown=e=>{if(state!=='play')return;if(document.pointerLockElement!==$('#gl')){lockPointer();return}if(e.button===0){mouseDown=true;fired=false}if(e.button===2)aimDown=true};
+  const onMove=e=>{if(state!=='play'||!(TOUCH.on||document.pointerLockElement===$('#gl')))return;const s=aimDown?(P.w===2?0.0006:0.0014):0.0023;P.yaw-=e.movementX*s;P.pitch=clamp(P.pitch-e.movementY*s,-1.45,1.45)};
+  const onDown=e=>{if(state!=='play')return;if(!(TOUCH.on||document.pointerLockElement===$('#gl'))){lockPointer();return}if(e.button===0){mouseDown=true;fired=false}if(e.button===2)aimDown=true};
   const onUp=e=>{if(e.button===0)mouseDown=false;if(e.button===2)aimDown=false};const onCtx=e=>{if(screenName==='mini')e.preventDefault()};
-  const onLock=()=>{if(state==='play'&&document.pointerLockElement!==$('#gl'))pause()};const onWheel=e=>{if(state==='play'){P.w=(P.w+(e.deltaY>0?1:2))%3;P.reload=0}};
+  const onLock=()=>{if(state==='play'&&!(TOUCH.on||document.pointerLockElement===$('#gl')))pause()};const onWheel=e=>{if(state==='play'){P.w=(P.w+(e.deltaY>0?1:2))%3;P.reload=0}};
   addEventListener('mousemove',onMove);addEventListener('mousedown',onDown);addEventListener('mouseup',onUp);addEventListener('contextmenu',onCtx);document.addEventListener('pointerlockchange',onLock);addEventListener('wheel',onWheel);
   reset();
   function botThink(o,dt){if(!o.alive){o.rt-=dt;if(o.rt<=0){const s=spawnFor(o.id,null);Object.assign(o,{x:s[0],z:s[1],alive:true,hp:100,prot:1.5});o.m.visible=true}return}o.prot=Math.max(0,(o.prot||0)-dt);
@@ -2871,6 +2871,102 @@ body.touch #speedo{transform:translateX(-50%) scale(.75);transform-origin:bottom
     if(tc.hidden===show){tc.hidden=!show;if(!show){ptr.clear();refresh()}}
   }
   setInterval(sync,150);sync();
+})();
+/* =================== touch controls for the mini-games =================== */
+(function(){
+  // per-game layout. stick: keys for the joystick; look: drag to turn (mouse-look games);
+  // aim: touch sets the mouse position (click = press/hold); swipe: swipe gestures press keys.
+  const B=(label,key,o={})=>Object.assign({label,key},o);
+  const KBk=a=>()=>(typeof KB!=='undefined'&&KB[a])||null;
+  const CFG={
+    fps:{stick:['KeyW','KeyS','KeyA','KeyD'],look:1,btn:[B('Fire','KeyF',{hold:1,big:1}),B('Jump','Space'),B('Reload','KeyR'),B('Gun','KeyQ'),B('Sprint','ShiftLeft',{hold:1})]},
+    sky:{stick:['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'],btn:[B('Guns','Space',{hold:1,big:1}),B('Missile','KeyF'),B('Thr +','KeyW',{hold:1}),B('Thr −','KeyS',{hold:1})]},
+    pen:{aim:{click:0},btn:[B('Shoot','Space',{hold:1,big:1}),B('◀','ArrowLeft',{hold:1}),B('▲','ArrowUp',{hold:1}),B('▶','ArrowRight',{hold:1}),B('▼','ArrowDown',{hold:1})]},
+    zom:{stick:['KeyW','KeyS','KeyA','KeyD'],aim:{click:1},btn:[B('Blast','Space')]},
+    run:{swipe:1,btn:[B('◀','ArrowLeft'),B('▲','ArrowUp'),B('▼','ArrowDown'),B('▶','ArrowRight')]},
+    tank:{stick:['KeyW','KeyS','KeyA','KeyD'],aim:{click:1},btn:[B('Fire','Space',{big:1})]},
+    hoop:{aim:{click:1},btn:[]},
+    bowl:{btn:[B('◀','ArrowLeft',{hold:1}),B('▶','ArrowRight',{hold:1}),B('Aim ▲','ArrowUp',{hold:1}),B('Aim ▼','ArrowDown',{hold:1}),B('Hook L','KeyQ'),B('Hook R','KeyE'),B('Bowl','Space',{hold:1,big:1})]},
+    hock:{aim:{click:0},btn:[]},
+    stk:{tap:'Space',btn:[]},
+    build:{stick:[KBk('fwd'),KBk('back'),KBk('left'),KBk('right')],look:1,btn:[B('Place',null,{mouse:0,hold:1,big:1}),B('Wall',KBk('wall')),B('Ramp',KBk('ramp')),B('Floor',KBk('floor')),B('Edit',KBk('edit')),B('Jump',KBk('jump')),B('Reset',null,{mouse:2})]},
+    air:{stick:['KeyW','KeyS','KeyA','KeyD'],look:1,btn:[B('Shoot',null,{mouse:0,hold:1,big:1}),B('Aim',null,{mouse:2,hold:1}),B('Reload','KeyR'),B('Gun','GUN'),B('Crouch','KeyC'),B('Jump','Space')]}
+  };
+  const css=document.createElement('style');css.textContent=`
+#tmini{position:fixed;inset:0;z-index:31;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;font-family:var(--display,system-ui)}
+#tmini .zone{position:absolute;inset:0}
+#tmini .stick{position:absolute;left:calc(22px + env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:132px;height:132px;border-radius:50%;background:rgba(12,14,18,.35);border:2px solid rgba(255,255,255,.25);touch-action:none}
+#tmini .stick i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6)}
+#tmini .btns{position:absolute;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:10px;max-width:min(320px,52vw)}
+#tmini button{touch-action:none;-webkit-tap-highlight-color:transparent;border:2px solid rgba(255,255,255,.28);background:rgba(12,14,18,.45);color:#fff;font:800 13px/1 var(--display,system-ui);letter-spacing:.05em;text-transform:uppercase;border-radius:16px;min-width:62px;height:54px;padding:0 10px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+#tmini button.big{min-width:96px;height:96px;border-radius:50%;background:rgba(177,75,255,.38);font-size:15px}
+#tmini button.down{background:rgba(177,75,255,.7);border-color:#d7a6ff}
+body.touch #miniHud .fx-bl{bottom:calc(8px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) scale(.75);transform-origin:bottom center;width:300px}
+body.touch #miniHud .fx-br{top:calc(10px + env(safe-area-inset-top,0px));bottom:auto;transform:scale(.82);transform-origin:top right}
+body.touch #miniHud .fx-tl{left:calc(70px + env(safe-area-inset-left,0px));transform:scale(.82);transform-origin:top left}
+body.touch #miniHud .fx-ban{top:30%}
+body.touch #miniPanel .ctrls{display:none}
+#miniPanel .tm-note{margin:6px 0 4px;padding:10px 12px;border:1px solid var(--line,#262b34);background:rgba(177,75,255,.12);font-size:14px;line-height:1.45}
+#tmini .pause{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:calc(12px + env(safe-area-inset-top,0px));min-width:48px;height:42px;border-radius:12px}
+`;document.head.appendChild(css);
+  const root=document.createElement('div');root.id='tmini';root.hidden=true;document.body.appendChild(root);
+  let cur=null,cfg=null,gunIdx=0;
+  const resolve=k=>typeof k==='function'?k():k;
+  const gl=()=>document.getElementById('gl')||window;
+  function key(code,down){if(!code)return;if(code==='GUN'){if(down){gunIdx=(gunIdx+1)%3;key('Digit'+(gunIdx+1),true);key('Digit'+(gunIdx+1),false)}return}
+    if(down&&K[code])return;dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{code,key:code}))}
+  function mouse(type,x,y,button,o){const ev=new MouseEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:y,button:button||0,buttons:type==='mouseup'?0:1});
+    if(o){try{Object.defineProperty(ev,'movementX',{value:o.mx});Object.defineProperty(ev,'movementY',{value:o.my})}catch(e){}}gl().dispatchEvent(ev)}
+  function build(id){
+    cfg=CFG[id];cur=id;root.innerHTML='';if(!cfg)return;
+    const zone=document.createElement('div');zone.className='zone';root.appendChild(zone);
+    // look / aim / swipe / tap zone (everything not covered by a control)
+    const zp=new Map();
+    zone.addEventListener('pointerdown',e=>{e.preventDefault();try{zone.setPointerCapture(e.pointerId)}catch(_){}zp.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t:performance.now()});
+      if(cfg.aim){mouse('mousemove',e.clientX,e.clientY);if(cfg.aim.click)mouse('mousedown',e.clientX,e.clientY,0)}
+      if(cfg.tap){key(cfg.tap,true);key(cfg.tap,false)}});
+    zone.addEventListener('pointermove',e=>{const p=zp.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+      if(cfg.look)mouse('mousemove',e.clientX,e.clientY,0,{mx:dx*2.2,my:dy*2.2});else if(cfg.aim)mouse('mousemove',e.clientX,e.clientY)});
+    const zend=e=>{const p=zp.get(e.pointerId);if(!p)return;zp.delete(e.pointerId);
+      if(cfg.aim&&cfg.aim.click)mouse('mouseup',e.clientX,e.clientY,0);
+      if(cfg.swipe){const dx=e.clientX-p.x0,dy=e.clientY-p.y0;if(Math.max(Math.abs(dx),Math.abs(dy))>30){const c=Math.abs(dx)>Math.abs(dy)?(dx>0?'ArrowRight':'ArrowLeft'):(dy>0?'ArrowDown':'ArrowUp');key(c,true);key(c,false)}}};
+    zone.addEventListener('pointerup',zend);zone.addEventListener('pointercancel',zend);
+    // joystick
+    if(cfg.stick){const st=document.createElement('div');st.className='stick';st.innerHTML='<i></i>';root.appendChild(st);const knob=st.firstChild;let sid=null,held=[];
+      const set=(dx,dy)=>{const r=60,l=Math.hypot(dx,dy),k=l>r?r/l:1;knob.style.transform=`translate(${dx*k}px,${dy*k}px)`;
+        const want=[];if(dy<-18)want.push(cfg.stick[0]);if(dy>18)want.push(cfg.stick[1]);if(dx<-18)want.push(cfg.stick[2]);if(dx>18)want.push(cfg.stick[3]);
+        const w=want.map(resolve);held.forEach(c=>{if(!w.includes(c))key(c,false)});w.forEach(c=>{if(!held.includes(c))key(c,true)});held=w};
+      st.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();sid=e.pointerId;try{st.setPointerCapture(sid)}catch(_){}const r=st.getBoundingClientRect();st._c=[r.left+r.width/2,r.top+r.height/2];set(e.clientX-st._c[0],e.clientY-st._c[1])});
+      st.addEventListener('pointermove',e=>{if(e.pointerId===sid)set(e.clientX-st._c[0],e.clientY-st._c[1])});
+      const se=e=>{if(e.pointerId!==sid)return;sid=null;set(0,0)};st.addEventListener('pointerup',se);st.addEventListener('pointercancel',se);
+      root._releaseStick=()=>set(0,0)}
+    // buttons
+    const box=document.createElement('div');box.className='btns';root.appendChild(box);
+    cfg.btn.forEach(b=>{const el=document.createElement('button');el.textContent=b.label;if(b.big)el.classList.add('big');box.appendChild(el);
+      const down=e=>{e.preventDefault();e.stopPropagation();el.classList.add('down');try{el.setPointerCapture(e.pointerId)}catch(_){}
+        const r=el.getBoundingClientRect(),x=innerWidth/2,y=innerHeight/2;
+        if(b.mouse!=null)mouse('mousedown',x,y,b.mouse);else{const c=resolve(b.key);key(c,true);if(!b.hold)key(c,false)}
+        if(!b.hold&&b.mouse==null)setTimeout(()=>el.classList.remove('down'),120)};
+      const up=e=>{if(!el.classList.contains('down'))return;el.classList.remove('down');if(b.mouse!=null){if(b.hold||true)mouse('mouseup',innerWidth/2,innerHeight/2,b.mouse)}else if(b.hold)key(resolve(b.key),false)};
+      el.addEventListener('pointerdown',down);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up)});
+    const pz=document.createElement('button');pz.className='pause';pz.textContent='II';root.appendChild(pz);
+    pz.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();key('Escape',true);key('Escape',false)});
+  }
+  function releaseAll(){if(root._releaseStick)root._releaseStick();for(const k in K)if(K[k])key(k,false);root.querySelectorAll('.down').forEach(b=>b.classList.remove('down'))}
+  const NOTE={look:'Left thumb: joystick to move. Right thumb: drag anywhere to look around. Use the buttons for everything else.',
+    aim:'Touch or drag on the screen to aim. The buttons on the right do the rest.',swipe:'Swipe left, right, up or down, or use the arrow buttons.',
+    tap:'Tap anywhere to drop the block.',def:'Use the on-screen buttons to play.'};
+  function noteFor(c){return !c?'':c.look?NOTE.look:c.stick&&c.aim?'Left thumb: joystick to move. Touch anywhere else to aim; hold to fire.':c.stick?'Left thumb: joystick to steer. Buttons on the right for everything else.':c.swipe?NOTE.swipe:c.tap?NOTE.tap:c.aim?(c.aim.click?'Touch the screen to aim; hold your finger down to fire or charge, lift to release.':NOTE.aim):NOTE.def}
+  function sync(){
+    const panel=document.getElementById('miniPanel');
+    const pid=typeof MINI!=='undefined'&&MINI.def?MINI.def.id:null;
+    if(TOUCH.on&&panel&&!panel.hidden&&CFG[pid]&&!panel.querySelector('.tm-note')){const n=document.createElement('div');n.className='tm-note';n.innerHTML='<b>Touch controls</b><br>'+noteFor(CFG[pid]);const anchor=panel.querySelector('.ctrls');if(anchor)anchor.parentNode.insertBefore(n,anchor);else{const f=panel.querySelector('button');if(f)f.parentNode.insertBefore(n,f);else panel.appendChild(n)}}
+    const id=typeof MINI!=='undefined'&&MINI.def?MINI.def.id:null;
+    const show=TOUCH.on&&screenName==='mini'&&!!id&&!!CFG[id]&&(!panel||panel.hidden);
+    if(show&&cur!==id)build(id);
+    if(root.hidden===show){root.hidden=!show;if(!show)releaseAll()}
+  }
+  setInterval(sync,150);
 })();
 }
 (function(){
