@@ -27,16 +27,23 @@ button{font:inherit;color:inherit}
 
 /* ---------- Lock screen: deliberately plain ---------- */
 #lock{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:16px;background:#0c0e12;color:#eef1f5;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:dark;overflow:auto}
-#lockForm{width:min(340px,100%);background:#15181e;border:1px solid #262b34;border-radius:12px;padding:32px 28px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:14px}
+#lockForm{width:min(320px,100%);background:#15181e;border:1px solid #262b34;border-radius:16px;padding:30px 26px 26px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;gap:16px;user-select:none;-webkit-user-select:none}
 #lockForm h1{font:600 20px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-style:normal;text-transform:none;letter-spacing:0;margin:0}
-#lockForm .sub{margin:-8px 0 4px;font-size:14px;color:#8b95a5}
-#lockForm label{font-size:13px;font-weight:600;color:#c9d0db}
-#lockForm input{font:16px system-ui,-apple-system,sans-serif;color:#eef1f5;background:#0f1216;border:1px solid #333a45;border-radius:8px;padding:11px 12px;width:100%}
-#lockForm input:focus{outline:none;border-color:#b14bff;box-shadow:0 0 0 3px rgba(177,75,255,.25)}
-#lockForm button{font:600 15px system-ui,-apple-system,sans-serif;color:#fff;background:#b14bff;border:0;border-radius:8px;padding:12px;cursor:pointer}
-#lockForm button:hover{background:#c06bff}
-#lockForm button:focus-visible{outline:2px solid #eef1f5;outline-offset:2px}
-#pwErr{margin:0;font-size:13px;color:#ff6b6b}
+#lockForm .sub{margin:-10px 0 0;font-size:14px;color:#8b95a5}
+#pinDots{display:flex;gap:14px;margin:6px 0 2px}
+#pinDots i{width:14px;height:14px;border-radius:50%;border:2px solid #4a5260;transition:background .12s,border-color .12s}
+#pinDots i.on{background:#b14bff;border-color:#b14bff}
+#lockForm.bad #pinDots i{border-color:#ff6b6b}
+#pad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center}
+#pad button{width:72px;height:72px;border-radius:50%;border:1px solid #2c323c;background:#1d2129;color:#eef1f5;font:500 26px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .1s,transform .08s}
+#pad button:hover{background:#262b35}
+#pad button:active,#pad button.press{background:#b14bff;border-color:#b14bff;transform:scale(.95)}
+#pad button:focus-visible{outline:2px solid #eef1f5;outline-offset:2px}
+#pad .fn{background:transparent;border-color:transparent;font-size:14px;font-weight:600;color:#8b95a5}
+#pad .fn:hover{background:#1d2129;color:#eef1f5}
+#pad [data-k="d"]{font-size:24px}
+#pwErr{margin:0;font-size:13px;color:#ff6b6b;min-height:16px}
+#pwErr[hidden]{display:block!important;visibility:hidden}
 #lockForm.shake{animation:shk .3s}
 @keyframes shk{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 
@@ -331,33 +338,42 @@ kbd{font-family:var(--display);font-weight:700;background:#2a303b;padding:1px 6p
 </style>
 
 <div id="lock">
-  <form id="lockForm" autocomplete="off">
-    <h1>Enter password</h1>
+  <form id="lockForm" autocomplete="off" onsubmit="return false">
+    <h1>Enter passcode</h1>
     <p class="sub">This site is private.</p>
-    <label for="pw">Password</label>
-    <input type="password" id="pw" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus>
-    <p id="pwErr" hidden>That password isn't right. Try again.</p>
-    <button type="submit">Unlock</button>
+    <div id="pinDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <p id="pwErr" role="alert" hidden>Wrong passcode. Try again.</p>
+    <div id="pad">
+      <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+      <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+      <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+      <button type="button" class="fn" data-k="c" aria-label="Clear">Clear</button><button type="button" data-k="0">0</button><button type="button" class="fn" data-k="d" aria-label="Delete">&#9003;</button>
+    </div>
   </form>
 </div>
 <script>
 (function(){
-  var f=document.getElementById('lockForm'),pw=document.getElementById('pw'),err=document.getElementById('pwErr');
-  f.addEventListener('submit',function(e){
-    e.preventDefault();
-    var v=(pw.value||'').replace(/\s+/g,'').toLowerCase();
-    if(v==='joeisabitch'){
-      var btn=f.querySelector('button');btn.textContent='Loading game…';
+  var CODE='80085',f=document.getElementById('lockForm'),err=document.getElementById('pwErr'),dots=document.querySelectorAll('#pinDots i'),code='',busy=false;
+  function draw(){for(var i=0;i<dots.length;i++)dots[i].classList.toggle('on',i<code.length)}
+  function check(){
+    if(code===CODE){busy=true;f.querySelector('h1').textContent='Loading game…';
       var t0=Date.now();(function wait(){
-        if(window.__startGame){document.getElementById('lock').remove();document.getElementById('app').hidden=false;try{window.__startGame()}catch(x){showFail(x)}return}
-        if(window.__loadErr||Date.now()-t0>20000){document.getElementById('lock').remove();showFail(new Error(window.__loadErr||'The 3D engine took too long to download'));return}
+        if(window.__startGame){document.getElementById('lock').remove();document.removeEventListener('keydown',kd);document.getElementById('app').hidden=false;try{window.__startGame()}catch(x){showFail(x)}return}
+        if(window.__loadErr||Date.now()-t0>20000){document.getElementById('lock').remove();document.removeEventListener('keydown',kd);showFail(new Error(window.__loadErr||'The 3D engine took too long to download'));return}
         setTimeout(wait,150)})();
-    }else{err.hidden=false;pw.value='';f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake');pw.focus()}
-  });
+    }else{busy=true;err.hidden=false;f.classList.add('bad');f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake');
+      setTimeout(function(){code='';draw();f.classList.remove('bad');busy=false},450)}
+  }
+  function key(k){if(busy)return;
+    if(k==='c'){code=''}else if(k==='d'){code=code.slice(0,-1)}else if(code.length<CODE.length){code+=k;err.hidden=true}
+    draw();if(code.length===CODE.length)setTimeout(check,120)}
+  document.getElementById('pad').addEventListener('click',function(e){var b=e.target.closest('button');if(b)key(b.dataset.k)});
+  function kd(e){var k=e.key;if(/^[0-9]$/.test(k))key(k);else if(k==='Backspace')key('d');else if(k==='Escape'||k==='Delete')key('c');else return;
+    e.preventDefault();var b=document.querySelector('#pad [data-k="'+(k==='Backspace'?'d':/^[0-9]$/.test(k)?k:'c')+'"]');if(b){b.classList.add('press');setTimeout(function(){b.classList.remove('press')},110)}}
+  document.addEventListener('keydown',kd);
   window.addEventListener('error',function(ev){if(!window.__loadErr&&ev&&ev.message)window.__firstErr=ev.message});
   window.showFail=function(x){var d=document.createElement('div');d.style.cssText='position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:#0c0e12;color:#eef1f5;font:16px system-ui,sans-serif;text-align:center;z-index:200';
     d.textContent='The game could not start ('+(x&&x.message||x)+(window.__firstErr?' | '+window.__firstErr:'')+'). Try reloading, or a different browser such as Chrome.';document.body.appendChild(d)};
-  pw.focus();
 })();
 </script>
 <div id="app" hidden>
